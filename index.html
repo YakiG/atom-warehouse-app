@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>АТОМ Склад</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
@@ -39,11 +42,13 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             overflow-x: hidden;
             transition: background 0.4s ease, color 0.4s ease;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .container {
@@ -124,14 +129,19 @@
         }
 
         .logo-top {
-            width: 90px;
-            height: 90px;
+            width: 140px;
+            height: 80px;
             margin-bottom: 30px;
-            border-radius: 24px;
+            border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
             border: 3px solid rgba(255, 255, 255, 0.2);
             animation: scaleIn 0.8s ease 0.2s backwards;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
         }
 
         @keyframes scaleIn {
@@ -148,7 +158,8 @@
         .logo-top img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            padding: 8px;
         }
 
         .title-section {
@@ -163,6 +174,7 @@
             color: white;
             margin-bottom: 0;
             text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            font-family: 'Inter', sans-serif;
         }
 
         .illustration-container {
@@ -236,6 +248,7 @@
             position: relative;
             overflow: hidden;
             animation: fadeIn 0.8s ease 0.5s backwards;
+            font-family: 'Inter', sans-serif;
         }
 
         @keyframes fadeIn {
@@ -294,6 +307,7 @@
             font-size: 24px;
             font-weight: 800;
             letter-spacing: -0.5px;
+            font-family: 'Inter', sans-serif;
         }
 
         .header-buttons {
@@ -331,6 +345,7 @@
             font-weight: 600;
             width: auto;
             padding: 0 14px;
+            font-family: 'Inter', sans-serif;
         }
 
         .header-btn.back {
@@ -352,6 +367,7 @@
             align-items: center;
             gap: 6px;
             margin-bottom: 16px;
+            font-family: 'Inter', sans-serif;
         }
 
         .btn-back-modal:hover {
@@ -409,6 +425,7 @@
             opacity: 0.95;
             margin-bottom: 12px;
             text-transform: uppercase;
+            font-family: 'Inter', sans-serif;
         }
 
         .stat-value {
@@ -417,6 +434,7 @@
             letter-spacing: -2px;
             position: relative;
             z-index: 1;
+            font-family: 'Inter', sans-serif;
         }
 
         .stat-footer {
@@ -425,6 +443,7 @@
             opacity: 0.9;
             position: relative;
             z-index: 1;
+            font-family: 'Inter', sans-serif;
         }
 
         /* Export/Import Buttons */
@@ -448,6 +467,7 @@
             justify-content: center;
             gap: 6px;
             box-shadow: var(--shadow);
+            font-family: 'Inter', sans-serif;
         }
 
         .btn-export {
@@ -546,6 +566,7 @@
             font-weight: 800;
             margin: 0 auto 14px;
             transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
         }
 
         .item-box:hover .count {
@@ -562,6 +583,7 @@
             font-weight: 600;
             text-align: center;
             opacity: 0.85;
+            font-family: 'Inter', sans-serif;
         }
 
         /* Items List */
@@ -620,12 +642,14 @@
             font-weight: 700;
             margin-bottom: 4px;
             color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
         }
 
         .item-info p {
             font-size: 12px;
             color: var(--text-secondary);
             font-weight: 500;
+            font-family: 'Inter', sans-serif;
         }
 
         .item-qty {
@@ -633,6 +657,7 @@
             font-size: 20px;
             font-weight: 800;
             color: #667eea;
+            font-family: 'Inter', sans-serif;
         }
 
         .item-actions {
@@ -655,6 +680,7 @@
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             color: #667eea;
             font-weight: 700;
+            font-family: 'Inter', sans-serif;
         }
 
         .action-btn:hover {
@@ -691,6 +717,7 @@
             cursor: pointer;
             white-space: nowrap;
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            font-family: 'Inter', sans-serif;
         }
 
         .tab-btn:hover {
@@ -725,6 +752,7 @@
             box-shadow: var(--shadow);
             position: relative;
             overflow: hidden;
+            font-family: 'Inter', sans-serif;
         }
 
         .btn-primary::before {
@@ -777,6 +805,7 @@
             color: var(--text-secondary);
             letter-spacing: 0.5px;
             text-transform: uppercase;
+            font-family: 'Inter', sans-serif;
         }
 
         input, select {
@@ -786,7 +815,7 @@
             border: 2px solid var(--border-color);
             border-radius: 10px;
             font-size: 14px;
-            font-family: inherit;
+            font-family: 'Inter', sans-serif;
             color: var(--text-primary);
             transition: all 0.3s;
         }
@@ -847,6 +876,7 @@
             justify-content: space-between;
             align-items: center;
             color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
         }
 
         .modal-close {
@@ -889,6 +919,7 @@
         .empty-state p {
             font-size: 14px;
             font-weight: 500;
+            font-family: 'Inter', sans-serif;
         }
 
         /* Success Message */
@@ -906,6 +937,7 @@
             font-weight: 600;
             z-index: 2000;
             box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+            font-family: 'Inter', sans-serif;
         }
 
         .success-message.show {
@@ -925,6 +957,7 @@
             font-size: 18px;
             font-weight: 800;
             color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
         }
     </style>
 </head>
@@ -934,7 +967,7 @@
         <div class="login-screen" id="loginScreen">
             <div class="login-content">
                 <div class="logo-top">
-                   <img src="./logo.jpg" alt="Logo" onerror="this.style.display='none'">
+                    <img src="./logo.jpg" alt="Logo" onerror="this.style.display='none'">
                 </div>
 
                 <div class="title-section">
@@ -943,10 +976,10 @@
 
                 <div class="illustration-container" id="imgContainer">
                     <img 
-    src="./warehouse.jpg" 
-    alt="Склад"
-    id="warehouseImg"
->
+                        src="./warehouse.jpg" 
+                        alt="Склад"
+                        id="warehouseImg"
+                    >
                     <div class="fallback-icon">📦</div>
                 </div>
 
