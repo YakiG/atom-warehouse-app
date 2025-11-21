@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Учет товаров</title>
+    <title>АТОМ Склад</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Tiro+Gurmukhi&display=swap" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
@@ -130,8 +129,8 @@
         }
 
         .logo-top {
-            width: 140px;
-            height: 80px;
+            width: 280px;
+            height: 60px;
             margin-bottom: 30px;
             border-radius: 20px;
             overflow: hidden;
@@ -160,6 +159,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            padding: 0px;
         }
 
         .title-section {
@@ -174,7 +174,7 @@
             color: white;
             margin-bottom: 0;
             text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            font-family: 'Tiro Gurmukhi', serif;
+            font-family: 'Inter', sans-serif;
         }
 
         .illustration-container {
@@ -294,7 +294,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 20px;
+            padding: 20px;
             background: var(--gradient-primary);
             color: white;
             box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
@@ -304,22 +304,15 @@
         }
 
         .app-title {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 50px;
-        }
-
-        .app-title img {
-            height: 50px;
-            width: 250px;
-            object-fit: contain;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            font-family: 'Inter', sans-serif;
         }
 
         .header-buttons {
             display: flex;
             gap: 10px;
-            margin-left: auto;
         }
 
         .header-btn {
@@ -659,6 +652,14 @@
             font-family: 'Inter', sans-serif;
         }
 
+        .item-qty {
+            text-align: right;
+            font-size: 20px;
+            font-weight: 800;
+            color: #667eea;
+            font-family: 'Inter', sans-serif;
+        }
+
         .item-actions {
             display: flex;
             gap: 8px;
@@ -970,7 +971,7 @@
                 </div>
 
                 <div class="title-section">
-                    <h1>Учет товаров</h1>
+                    <h1>АТОМ СКЛАД</h1>
                 </div>
 
                 <div class="illustration-container" id="imgContainer">
@@ -993,9 +994,7 @@
 
             <!-- Top Bar -->
             <div class="top-bar">
-                <div class="app-title">
-                    <img src="./header-logo.jpg" alt="Logo" style="height: 50px; width: 250px !important; object-fit: contain;">
-                </div>
+                <div class="app-title">АТОМ СКЛАД</div>
                 <div class="header-buttons">
                     <button class="header-btn theme-toggle" onclick="toggleTheme()" id="themeToggle">🌙</button>
                     <button class="header-btn" onclick="openModal('addModal')">✚</button>
@@ -1492,6 +1491,7 @@
                         <h3>#${item.id} ${item.name}</h3>
                         <p>${item.quantity} ${item.unit}</p>
                     </div>
+                    <div class="item-qty">${item.quantity}</div>
                     <div class="item-actions">
                         <button class="action-btn" onclick="openTakeModal(${item.id})">−</button>
                         <button class="action-btn" onclick="openDeleteModal(${item.id})">✕</button>
@@ -1515,6 +1515,7 @@
                         <h3>#${item.id} ${item.name}</h3>
                         <p>${item.quantity} ${item.unit}</p>
                     </div>
+                    <div class="item-qty">${item.quantity}</div>
                     <div class="item-actions">
                         <button class="action-btn" onclick="openTakeModal(${item.id})">−</button>
                     </div>
