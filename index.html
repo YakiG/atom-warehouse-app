@@ -1316,12 +1316,15 @@
     if (supabase) {
         const { data, error } = await supabase.auth.signInAnonymously();
         if (error) {
+            console.error('Auth error:', error);
             showMessage('Ошибка входа: ' + error.message);
             return;
         }
         currentUser = data.user;
+        console.log('Current user:', currentUser.id);
         await loadItems();
-        // Добавлено - отображаем данные после загрузки
+        console.log('Items loaded:', items.length);
+        // Отображаем данные ПОСЛЕ загрузки
         renderHome();
         renderAllItems();
         renderLowStock();
