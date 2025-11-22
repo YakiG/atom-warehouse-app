@@ -1312,22 +1312,26 @@
         }
 
         // ========== ЛОГИН ==========
-        async function handleLogin() {
-            if (supabase) {
-                const { data, error } = await supabase.auth.signInAnonymously();
-                if (error) {
-                    showMessage('Ошибка входа: ' + error.message);
-                    return;
-                }
-                currentUser = data.user;
-                await loadItems();
-            } else {
-                const username = `User_${Math.random().toString(36).substr(2, 9)}`;
-                localStorage.setItem('currentUser', username);
-                currentUser = { id: username };
-            }
-            showMainApp();
+      async function handleLogin() {
+    if (supabase) {
+        const { data, error } = await supabase.auth.signInAnonymously();
+        if (error) {
+            showMessage('Ошибка входа: ' + error.message);
+            return;
         }
+        currentUser = data.user;
+        await loadItems();
+        renderHome();
+        renderAllItems();
+        renderLowStock();
+    } else {
+        const username = `User_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('currentUser', username);
+        currentUser = { id: username };
+        renderHome();
+    }
+    showMainApp();
+}
 
         // ========== ВЫХОД ==========
         async function logout() {
