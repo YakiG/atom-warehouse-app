@@ -1351,25 +1351,30 @@
         }
 
         // ========== ЗАГРУЗКА ТОВАРОВ ==========
-        async function loadItems() {
-            if (!supabase) return;
-            
-            const { data, error } = await supabase
-                .from('inventory')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .order('id', { ascending: true });
-            
-            if (error) {
-                console.error('Ошибка загрузки:', error);
-                return;
-            }
-            
-            items = data || [];
-            renderHome();
-            renderAllItems();
-            renderLowStock();
+        async function handleLogin() {
+    if (supabase) {
+        const { data, error } = await supabase.auth.signInAnonymously();
+        if (error) {
+            console.error('Auth error:', error);
+            showMessage('Ошибка входа: ' + error.message);
+            return;
         }
+        currentUser = data.user;
+        console.log('Current user:', currentUser.id);
+        await loadItems();
+        console.log('After loadItems - items count:', items.length);
+        // Отображаем данные ПОСЛЕ загрузки
+        renderHome();
+        renderAllItems();
+        renderLowStock();
+    } else {
+        const username = `User_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('currentUser', username);
+        currentUser = { id: username };
+        renderHome();
+    }
+    showMainApp();
+}
 
         // ========== ДОБАВИТЬ ТОВАР ==========
         async function addItemModal() {
