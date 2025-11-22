@@ -1352,8 +1352,10 @@
         }
 
         // ========== ЗАГРУЗКА ТОВАРОВ ==========
-        async function loadItems() {
+    async function loadItems() {
     if (!supabase) return;
+    
+    console.log('Loading items for user:', currentUser.id);
     
     const { data, error } = await supabase
         .from('inventory')
@@ -1362,11 +1364,13 @@
         .order('id', { ascending: true });
     
     if (error) {
-        console.error('Ошибка загрузки:', error);
+        console.error('Load error:', error);
         return;
     }
     
+    console.log('Data from Supabase:', data);
     items = data || [];
+    console.log('Items set to:', items);
 }
 
         // ========== ДОБАВИТЬ ТОВАР ==========
