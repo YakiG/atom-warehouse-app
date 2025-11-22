@@ -1321,6 +1321,7 @@
         }
         currentUser = data.user;
         await loadItems();
+        // Добавлено - отображаем данные после загрузки
         renderHome();
         renderAllItems();
         renderLowStock();
