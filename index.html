@@ -1352,7 +1352,7 @@
         }
 
         // ========== ЗАГРУЗКА ТОВАРОВ ==========
-    async function loadItems() {
+   async function loadItems() {
     if (!supabase) return;
     
     console.log('Loading items for user:', currentUser.id);
@@ -1371,6 +1371,11 @@
     console.log('Data from Supabase:', data);
     items = data || [];
     console.log('Items set to:', items);
+    
+    // ДОБАВЛЕНО - отображаем данные после загрузки
+    renderHome();
+    renderAllItems();
+    renderLowStock();
 }
 
         // ========== ДОБАВИТЬ ТОВАР ==========
