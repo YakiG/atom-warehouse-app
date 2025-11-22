@@ -1350,24 +1350,21 @@
 
         // ========== ЗАГРУЗКА ТОВАРОВ ==========
         async function loadItems() {
-            if (!supabase) return;
-            
-            const { data, error } = await supabase
-                .from('inventory')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .order('id', { ascending: true });
-            
-            if (error) {
-                console.error('Ошибка загрузки:', error);
-                return;
-            }
-            
-            items = data || [];
-            renderHome();
-            renderAllItems();
-            renderLowStock();
-        }
+    if (!supabase) return;
+    
+    const { data, error } = await supabase
+        .from('inventory')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('id', { ascending: true });
+    
+    if (error) {
+        console.error('Ошибка загрузки:', error);
+        return;
+    }
+    
+    items = data || [];
+}
 
         // ========== ДОБАВИТЬ ТОВАР ==========
         async function addItemModal() {
