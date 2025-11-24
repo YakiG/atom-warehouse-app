@@ -1143,14 +1143,18 @@
 
     <script>
         // ========== SUPABASE НАСТРОЙКА ==========
-        const SUPABASE_URL = 'https://hltqagfpltxdfftawijf.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsdHFhZ2ZwbHR4ZGZmdGF3aWpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5ODEwMzcsImV4cCI6MjA3OTU1NzAzN30.DNt4LNPJuRYlleLTa8bGgqnL6ScnE76jr65qvY96Rig';
+        // Supabase Configuration - REPLACE WITH YOUR VALUES
+const SUPABASE_URL = 'https://hltqagfpltxdfftawijf.supabase.co';  // ← ВСТАВЬТЕ РЕАЛЬНЫЙ URL
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsdHFhZ2ZwbHR4ZGZmdGF3aWpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5ODEwMzcsImV4cCI6MjA3OTU1NzAzN30.DNt4LNPJuRYlleLTa8bGgqnL6ScnE76jr65qvY96Rig';  // ← ВСТАВЬТЕ РЕАЛЬНЫЙ КЛЮЧ
 
-        let supabase = null;
-        if (SUPABASE_URL !== 'https://hltqagfpltxdfftawijf.supabase.co' && window.supabase) {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
-
+// Initialize Supabase client
+let supabase = null;
+if (window.supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('✅ Supabase initialized:', SUPABASE_URL);
+} else {
+    console.warn('❌ Supabase library not loaded');
+}
         // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
         let currentUser = null;
         let items = [];
