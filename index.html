@@ -1313,25 +1313,17 @@
 
         // ========== ЛОГИН ==========
         async function handleLogin() {
-    // Получаем email и пароль из формы (которая уже на экране входа)
-    const emailField = document.getElementById('emailInput');
-    const passwordField = document.getElementById('passwordInput');
-    
-    const email = emailField.value.trim();
-    const password = passwordField.value.trim();
+    // Получаем email и пароль из формы входа (добавим чуть позже)
+    const email = prompt('Введите email:');
+    const password = prompt('Введите пароль:');
     
     if (!email || !password) {
-        showMessage('❌ Введите email и пароль');
+        showMessage('❌ Email и пароль обязательны');
         return;
     }
     
-    if (!supabase) {
-        showMessage('❌ Ошибка подключения к Supabase');
-        return;
-    }
-    
-    try {
-        // Вход с email и паролем ИЗ SUPABASE
+    if (supabase) {
+        // Пытаемся войти с email и паролем
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
             password: password
@@ -1339,18 +1331,20 @@
         
         if (error) {
             console.error('Auth error:', error);
-            showMessage('❌ Неверный email или пароль');
+            showMessage('❌ Неверный email или пароль: ' + error.message);
             return; // ОСТАНОВКА - не пускаем в приложение
         }
         
         currentUser = data.user;
-        console.log('✅ Успешный вход:', currentUser.email);
-        
+        console.log('✅ Вход успешен:', currentUser.email);
         await loadItems();
         console.log('Items loaded:', items.length);
-    } catch (err) {
-        console.error('Login error:', err);
-        showMessage('❌ Ошибка входа: ' + err.message);
+        // ДОБАВЛЕНО - отображаем данные
+        renderHome();
+        renderAllItems();
+        renderLowStock();
+    } else {
+        showMessage('❌ Supabase не подключен');
         return;
     }
     
@@ -1372,29 +1366,25 @@
         }
 
         // ========== ЗАГРУЗКА ТОВАРОВ ==========
-       async function loadItems() {
-    if (!supabase || !currentUser) {
-        console.error('Supabase or user not initialized');
-        return;
-    }
-    
-    console.log('Loading items for user:', currentUser.id);
-    
-    const { data, error } = await supabase
-        .from('inventory')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .order('created_at', { ascending: false });
-    
-    if (error) {
-        console.error('Error loading items:', error);
-        showMessage('Ошибка загрузки товаров');
-        return;
-    }
-    
-    console.log('Loaded items:', data);
-    items = data || [];
-}
+        async function loadItems() {
+            if (!supabase) return;
+            
+            const { data, error } = await supabase
+                .from('inventory')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('id', { ascending: true });
+            
+            if (error) {
+                console.error('Ошибка загрузки:', error);
+                return;
+            }
+            
+            items = data || [];
+            renderHome();
+            renderAllItems();
+            renderLowStock();
+        }
 
         // ========== ДОБАВИТЬ ТОВАР ==========
         async function addItemModal() {
@@ -1548,13 +1538,11 @@
             document.getElementById('mainApp').classList.add('hidden');
         }
 
-        async function showMainApp() {
-    if (supabase) {
-        renderHome();
-        renderAllItems();
-        renderLowStock();
-    }
-}
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            renderHome();
+        }
 
         // ========== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ==========
         function switchTab(tab) {
