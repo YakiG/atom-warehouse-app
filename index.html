@@ -1316,32 +1316,53 @@ if (window.supabase) {
         }
 
         // ========== ЛОГИН ==========
-       async function handleLogin() {
-    if (supabase) {
+       async function handleLogin(e) {
+    e.preventDefault();
+    
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+    
+    if (!email || !password) {
+        showLoginError('Введите email и пароль');
+        return;
+    }
+    
+    if (!supabase) {
+        showLoginError('❌ Supabase не подключен!');
+        return;
+    }
+    
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Вход...';
+    loginError.style.display = 'none';
+    
+    try {
+        console.log('🔐 Попытка входа с:', email);
         const { data, error } = await supabase.auth.signInWithPassword({
-            email: emailInput.value.trim(),
-            password: passwordInput.value.trim()
+            email: email,
+            password: password
         });
         
         if (error) {
-            console.error('Auth error:', error);
-            showMessage('Ошибка входа: ' + error.message);
+            console.error('❌ Ошибка входа:', error);
+            showLoginError('❌ Неверный email или пароль');
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Войти';
             return;
         }
         
+        console.log('✅ Успешный вход:', data.user.email);
         currentUser = data.user;
-        console.log('Current user:', currentUser.id);
-        await loadItems();
-        console.log('Items loaded:', items.length);
-        renderHome();
-        renderAllItems();
-        renderLowStock();
-    } else {
-        const username = `User_${Math.random().toString(36).substr(2, 9)}`;
-        localStorage.setItem('currentUser', username);
-        currentUser = { id: username };
+        console.log('✅ Текущий пользователь ID:', currentUser.id);
+        showLoginError(''); // Очистить ошибки
+        await showMainApp();
+        
+    } catch (err) {
+        console.error('❌ Непредвиденная ошибка:', err);
+        showLoginError('❌ Ошибка входа: ' + err.message);
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Войти';
     }
-    showMainApp();
 }
 
         // ========== ВЫХОД ==========
