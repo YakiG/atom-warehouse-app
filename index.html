@@ -1313,50 +1313,41 @@
 
         // ========== ЛОГИН ==========
         async function handleLogin() {
+    // Получаем email и пароль из формы входа (добавим чуть позже)
     const email = prompt('Введите email:');
     const password = prompt('Введите пароль:');
     
     if (!email || !password) {
-        showMessage('Email и пароль обязательны');
+        showMessage('❌ Email и пароль обязательны');
         return;
     }
     
     if (supabase) {
-        // Пытаемся войти
-        const { data, error } = await supabase.auth.signInWithPassword(email, password);
+        // Пытаемся войти с email и паролем
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
         
-        if (error && error.status === 400) {
-            // Пользователя нет - создаем новый аккаунт
-            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-                email,
-                password
-            });
-            
-            if (signUpError) {
-                console.error('Sign up error:', signUpError);
-                showMessage('Ошибка регистрации: ' + signUpError.message);
-                return;
-            }
-            
-            currentUser = signUpData.user;
-            console.log('User created:', currentUser.id);
-        } else if (error) {
+        if (error) {
             console.error('Auth error:', error);
-            showMessage('Ошибка входа: ' + error.message);
-            return;
-        } else {
-            currentUser = data.user;
-            console.log('User logged in:', currentUser.id);
+            showMessage('❌ Неверный email или пароль: ' + error.message);
+            return; // ОСТАНОВКА - не пускаем в приложение
         }
         
+        currentUser = data.user;
+        console.log('✅ Вход успешен:', currentUser.email);
         await loadItems();
         console.log('Items loaded:', items.length);
-    } else {
-        const username = `User_${Math.random().toString(36).substr(2, 9)}`;
-        localStorage.setItem('currentUser', username);
-        currentUser = { id: username };
+        // ДОБАВЛЕНО - отображаем данные
         renderHome();
+        renderAllItems();
+        renderLowStock();
+    } else {
+        showMessage('❌ Supabase не подключен');
+        return;
     }
+    
     showMainApp();
 }
 
