@@ -1313,17 +1313,25 @@
 
         // ========== ЛОГИН ==========
         async function handleLogin() {
-    // Получаем email и пароль из формы входа (добавим чуть позже)
-    const email = prompt('Введите email:');
-    const password = prompt('Введите пароль:');
+    // Получаем email и пароль из формы (которая уже на экране входа)
+    const emailField = document.getElementById('emailInput');
+    const passwordField = document.getElementById('passwordInput');
+    
+    const email = emailField.value.trim();
+    const password = passwordField.value.trim();
     
     if (!email || !password) {
-        showMessage('❌ Email и пароль обязательны');
+        showMessage('❌ Введите email и пароль');
         return;
     }
     
-    if (supabase) {
-        // Пытаемся войти с email и паролем
+    if (!supabase) {
+        showMessage('❌ Ошибка подключения к Supabase');
+        return;
+    }
+    
+    try {
+        // Вход с email и паролем ИЗ SUPABASE
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
             password: password
@@ -1331,20 +1339,18 @@
         
         if (error) {
             console.error('Auth error:', error);
-            showMessage('❌ Неверный email или пароль: ' + error.message);
+            showMessage('❌ Неверный email или пароль');
             return; // ОСТАНОВКА - не пускаем в приложение
         }
         
         currentUser = data.user;
-        console.log('✅ Вход успешен:', currentUser.email);
+        console.log('✅ Успешный вход:', currentUser.email);
+        
         await loadItems();
         console.log('Items loaded:', items.length);
-        // ДОБАВЛЕНО - отображаем данные
-        renderHome();
-        renderAllItems();
-        renderLowStock();
-    } else {
-        showMessage('❌ Supabase не подключен');
+    } catch (err) {
+        console.error('Login error:', err);
+        showMessage('❌ Ошибка входа: ' + err.message);
         return;
     }
     
