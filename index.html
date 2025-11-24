@@ -1312,42 +1312,31 @@
         }
 
         // ========== ЛОГИН ==========
-        async function handleLogin() {
-    // Получаем email и пароль из формы входа (добавим чуть позже)
-    const email = prompt('Введите email:');
-    const password = prompt('Введите пароль:');
-    
-    if (!email || !password) {
-        showMessage('❌ Email и пароль обязательны');
-        return;
-    }
-    
+       async function handleLogin() {
     if (supabase) {
-        // Пытаемся войти с email и паролем
         const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password
+            email: emailInput.value.trim(),
+            password: passwordInput.value.trim()
         });
         
         if (error) {
             console.error('Auth error:', error);
-            showMessage('❌ Неверный email или пароль: ' + error.message);
-            return; // ОСТАНОВКА - не пускаем в приложение
+            showMessage('Ошибка входа: ' + error.message);
+            return;
         }
         
         currentUser = data.user;
-        console.log('✅ Вход успешен:', currentUser.email);
+        console.log('Current user:', currentUser.id);
         await loadItems();
         console.log('Items loaded:', items.length);
-        // ДОБАВЛЕНО - отображаем данные
         renderHome();
         renderAllItems();
         renderLowStock();
     } else {
-        showMessage('❌ Supabase не подключен');
-        return;
+        const username = `User_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('currentUser', username);
+        currentUser = { id: username };
     }
-    
     showMainApp();
 }
 
