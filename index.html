@@ -1544,11 +1544,13 @@
             document.getElementById('mainApp').classList.add('hidden');
         }
 
-        function showMainApp() {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-            renderHome();
-        }
+        async function showMainApp() {
+    if (supabase) {
+        renderHome();
+        renderAllItems();
+        renderLowStock();
+    }
+}
 
         // ========== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ==========
         function switchTab(tab) {
