@@ -1316,15 +1316,23 @@
             if (supabase) {
                 const { data, error } = await supabase.auth.signInAnonymously();
                 if (error) {
+                    console.error('Auth error:', error);
                     showMessage('Ошибка входа: ' + error.message);
                     return;
                 }
                 currentUser = data.user;
+                console.log('Current user:', currentUser.id);
                 await loadItems();
+                console.log('Items loaded:', items.length);
+                // ДОБАВЛЕНО - отображаем все после загрузки
+                renderHome();
+                renderAllItems();
+                renderLowStock();
             } else {
                 const username = `User_${Math.random().toString(36).substr(2, 9)}`;
                 localStorage.setItem('currentUser', username);
                 currentUser = { id: username };
+                renderHome();
             }
             showMainApp();
         }
