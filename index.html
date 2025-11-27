@@ -1379,8 +1379,18 @@
         }
 
         // ========== ЗАГРУЗКА ТОВАРОВ ==========
-        async function loadItems() {
-            if (!supabase) return;
+       async function loadItems() {
+            if (!supabase) {
+                console.warn('⚠️ Supabase not available');
+                return;
+            }
+            
+            if (!currentUser?.id) {
+                console.error('❌ No currentUser.id');
+                return;
+            }
+            
+            console.log('📥 Loading items for user:', currentUser.id);
             
             const { data, error } = await supabase
                 .from('inventory')
@@ -1389,11 +1399,17 @@
                 .order('id', { ascending: true });
             
             if (error) {
-                console.error('Ошибка загрузки:', error);
+                console.error('❌ Load error:', {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details
+                });
+                showMessage('Ошибка загрузки: ' + error.message);
                 return;
             }
             
             items = data || [];
+            console.log('✓ Loaded items:', items.length);
             renderHome();
             renderAllItems();
             renderLowStock();
