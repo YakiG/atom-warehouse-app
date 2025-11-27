@@ -1410,16 +1410,38 @@
                 return;
             }
 
+            if (!currentUser) {
+                showMessage('❌ Ошибка: пользователь не определен');
+                console.error('currentUser is null!');
+                return;
+            }
+
             const now = new Date().toISOString();
+            const insertData = {
+                name, 
+                quantity: qty, 
+                unit, 
+                user_id: currentUser.id, 
+                created_at: now
+            };
+
+            console.log('📝 Inserting:', insertData);
 
             if (supabase) {
-                const { error } = await supabase.from('inventory').insert([{
-                    name, quantity: qty, unit, user_id: currentUser.id, created_at: now
-                }]);
+                const { data, error } = await supabase.from('inventory').insert([insertData]);
+                
                 if (error) {
-                    showMessage('Ошибка: ' + error.message);
+                    console.error('❌ Supabase INSERT error:', {
+                        message: error.message,
+                        code: error.code,
+                        details: error.details,
+                        hint: error.hint
+                    });
+                    showMessage('❌ Ошибка БД: ' + error.message);
                     return;
                 }
+                
+                console.log('✓ Inserted successfully:', data);
                 await loadItems();
             } else {
                 const id = Math.max(...items.map(i => i.id || 0), 0) + 1;
