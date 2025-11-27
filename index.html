@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATOM Склад - Учет товаров</title>
+    <title>АТОМ Склад</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Tiro+Gurmukhi&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -12,662 +17,1641 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a1a;
+            --text-secondary: #6c757d;
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-card: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --border-color: #e0e4e8;
+            --shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+            --shadow-hover: 0 12px 24px rgba(102, 126, 234, 0.2);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #131829;
+            --bg-card: #1a1f3a;
+            --text-primary: #ffffff;
+            --text-secondary: #a8b2c1;
+            --border-color: #2d3554;
+            --shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+            --shadow-hover: 0 12px 24px rgba(102, 126, 234, 0.3);
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            transition: background 0.4s ease, color 0.4s ease;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--bg-secondary);
             min-height: 100vh;
+            transition: background 0.4s ease;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ===== ЭКРАН ВХОДА ===== */
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            background: var(--gradient-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-screen::before {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            top: -100px;
+            right: -100px;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .login-screen::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            bottom: -50px;
+            left: -50px;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(20px); }
+        }
+
+        .login-screen.hidden {
+            display: none;
+        }
+
+        .login-content {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo-top {
+            width: 280px;    /* ← Ширина логотипа */
+            height: 80px;    /* ← Высота логотипа */
+            margin-bottom: 30px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            animation: scaleIn 0.8s ease 0.2s backwards;
             display: flex;
             align-items: center;
             justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
         }
 
-        /* LOGIN SCREEN */
-        #loginScreen {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 40px;
-            max-width: 400px;
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .logo-top img {
             width: 100%;
+            height: 100%;
+            object-fit: cover;
+            padding: 0;
         }
 
-        .login-header {
+        .title-section {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
-        .login-header h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
+        .title-section h1 {
+            font-size: 38px;
+            font-weight: 900;
+            letter-spacing: -1px;
+            color: white;
+            margin-bottom: 0;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            font-family: 'Tiro Gurmukhi', serif;
         }
 
-        .login-header p {
-            color: #666;
-            font-size: 14px;
+        .illustration-container {
+            width: 100%;
+            max-width: 300px;
+            height: 300px;
+            margin: 30px 0 50px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+            animation: slideInScale 0.8s ease 0.3s backwards;
         }
 
-        .form-group {
-            margin-bottom: 20px;
+        @keyframes slideInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
         }
 
-        label {
+        .illustration-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .illustration-container .fallback-icon {
+            font-size: 100px;
+            display: none;
+            animation: bounce 2s ease infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .illustration-container.error .fallback-icon {
             display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-            font-size: 14px;
         }
 
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        #loginBtn {
-            width: 100%;
-            padding: 12px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s;
-            font-size: 16px;
-        }
-
-        #loginBtn:hover {
-            background: #5568d3;
-        }
-
-        #loginBtn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        #loginError {
-            background: #fee;
-            color: #c33;
-            padding: 12px;
-            border-radius: 6px;
-            margin-top: 15px;
+        .illustration-container.error img {
             display: none;
-            font-size: 14px;
-            border: 1px solid #fcc;
         }
 
-        /* MAIN APP */
-        #mainApp {
-            display: none;
+        .btn-login {
             width: 100%;
+            max-width: 300px;
+            padding: 18px;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 1000px;
-            margin: 0 auto;
+            color: #667eea;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            letter-spacing: 0.5px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 0.8s ease 0.5s backwards;
+            font-family: 'Inter', sans-serif;
         }
 
-        .app-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.1);
+            transition: left 0.3s ease;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-login:active {
+            transform: translateY(-2px) scale(0.98);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ===== ГЛАВНЫЙ ИНТЕРФЕЙС ===== */
+        .main-app {
+            display: block;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            padding-bottom: 20px;
+        }
+
+        .main-app.hidden {
+            display: none;
+        }
+
+        /* Top Bar */
+        .top-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-radius: 12px 12px 0 0;
+            padding: 20px;
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .app-title {
             font-size: 24px;
-            font-weight: bold;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            font-family: 'Inter', sans-serif;
         }
 
-        .user-section {
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-btn {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 20px;
             display: flex;
             align-items: center;
-            gap: 15px;
-            font-size: 14px;
-        }
-
-        #logoutBtn {
-            background: rgba(255,255,255,0.2);
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             color: white;
-            border: 1px solid white;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.3s;
+            backdrop-filter: blur(5px);
         }
 
-        #logoutBtn:hover {
-            background: rgba(255,255,255,0.3);
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
         }
 
-        .app-content {
-            padding: 20px;
+        .header-btn:active {
+            transform: scale(0.92);
         }
 
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+        .header-btn.logout {
+            font-size: 12px;
+            font-weight: 600;
+            width: auto;
+            padding: 0 14px;
+            font-family: 'Inter', sans-serif;
         }
 
-        .stat-card {
-            background: #f5f7fa;
-            padding: 20px;
+        .header-btn.back {
+            margin-right: auto;
+        }
+
+        /* Back Button */
+        .btn-back-modal {
+            padding: 12px 16px;
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
             border-radius: 8px;
-            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 16px;
+            font-family: 'Inter', sans-serif;
         }
 
-        .stat-number {
-            font-size: 32px;
-            font-weight: bold;
-            color: #667eea;
+        .btn-back-modal:hover {
+            transform: translateX(-4px);
+        }
+
+        .btn-back-modal:active {
+            transform: scale(0.95);
+        }
+
+        /* Content */
+        .content {
+            padding: 20px;
+        }
+
+        /* Main Stat Card */
+        .stat-card {
+            background: var(--gradient-card);
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 24px;
+            position: relative;
+            color: white;
+            box-shadow: var(--shadow-hover);
+            overflow: hidden;
+            animation: slideIn 0.6s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            top: -100px;
+            right: -100px;
         }
 
         .stat-label {
-            color: #666;
-            font-size: 14px;
-            margin-top: 5px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            opacity: 0.95;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            font-family: 'Inter', sans-serif;
         }
 
-        .controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
+        .stat-value {
+            font-size: 48px;
+            font-weight: 900;
+            letter-spacing: -2px;
+            position: relative;
+            z-index: 1;
+            font-family: 'Inter', sans-serif;
         }
 
-        button {
-            padding: 10px 16px;
+        .stat-footer {
+            font-size: 12px;
+            margin-top: 16px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Export/Import Buttons */
+        .export-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .btn-export, .btn-import {
+            padding: 14px;
             border: none;
-            border-radius: 6px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-shadow: var(--shadow);
+            font-family: 'Inter', sans-serif;
         }
 
-        .btn-primary {
-            background: #667eea;
+        .btn-export {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
             color: white;
         }
 
-        .btn-primary:hover {
-            background: #5568d3;
+        .btn-export:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
         }
 
-        .btn-secondary {
-            background: #e8eef5;
-            color: #333;
+        .btn-export:active {
+            transform: scale(0.95);
         }
 
-        .btn-secondary:hover {
-            background: #d4dce8;
+        .btn-import {
+            background: linear-gradient(135deg, #007bff 0%, #0dcaf0 100%);
+            color: white;
         }
 
-        .items-list {
-            border: 1px solid #eee;
-            border-radius: 8px;
+        .btn-import:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn-import:active {
+            transform: scale(0.95);
+        }
+
+        #importFile {
+            display: none;
+        }
+
+        /* Items Grid */
+        .items-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .item-box {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 18px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            border: 2px solid var(--border-color);
+            box-shadow: var(--shadow);
             overflow: hidden;
         }
 
-        .item {
+        .item-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(102, 126, 234, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .item-box:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-hover);
+            border-color: #667eea;
+        }
+
+        .item-box:hover::before {
+            opacity: 1;
+        }
+
+        .item-box:active {
+            transform: scale(0.97);
+        }
+
+        .item-box.highlight {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .item-box .count {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            background: rgba(102, 126, 234, 0.15);
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: 800;
+            margin: 0 auto 14px;
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .item-box:hover .count {
+            background: rgba(102, 126, 234, 0.25);
+            transform: scale(1.1);
+        }
+
+        .item-box.highlight .count {
+            background: rgba(102, 126, 234, 0.15);
+        }
+
+        .item-box .title {
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            opacity: 0.85;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Items List */
+        .items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .item-card {
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            background: white;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 2px solid var(--border-color);
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
         }
 
-        .item:last-child {
-            border-bottom: none;
+        .item-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--gradient-primary);
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform 0.3s;
         }
 
-        .item-info {
-            flex: 1;
+        .item-card:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-hover);
         }
 
-        .item-name {
-            font-weight: 600;
-            color: #333;
-            font-size: 16px;
+        .item-card:hover::before {
+            transform: scaleY(1);
         }
 
-        .item-details {
-            color: #666;
+        .item-card:active {
+            transform: scale(0.98);
+        }
+
+        .item-card.low-stock {
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .item-info h3 {
             font-size: 14px;
-            margin-top: 5px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
         }
 
-        .item-quantity {
+        .item-info p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .item-qty {
+            text-align: right;
             font-size: 20px;
-            font-weight: bold;
+            font-weight: 800;
             color: #667eea;
-            min-width: 80px;
-            text-align: center;
+            font-family: 'Inter', sans-serif;
         }
 
         .item-actions {
             display: flex;
             gap: 8px;
+            margin-left: 12px;
         }
 
-        .btn-sm {
-            padding: 6px 12px;
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8ecff 100%);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            color: #667eea;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .action-btn:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .action-btn:active {
+            transform: scale(0.85);
+        }
+
+        /* Tabs */
+        .tabs-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .tabs-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-btn {
+            padding: 10px 16px;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .tab-btn:hover {
+            border-color: #667eea;
+        }
+
+        .tab-btn.active {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            box-shadow: var(--shadow-hover);
+        }
+
+        .tab-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Primary Button */
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-primary:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        /* Sections */
+        .section {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
             font-size: 12px;
-            background: #e8eef5;
-            color: #333;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-family: 'Inter', sans-serif;
         }
 
-        .btn-sm:hover {
-            background: #d4dce8;
+        input, select {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+            transition: all 0.3s;
         }
 
-        .btn-danger {
-            background: #fee;
-            color: #c33;
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: var(--bg-secondary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .btn-danger:hover {
-            background: #fcc;
+        input::placeholder {
+            color: var(--text-secondary);
         }
 
-        /* MODAL */
+        /* Modals */
         .modal {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            align-items: center;
-            justify-content: center;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
             z-index: 1000;
+            align-items: flex-end;
+            animation: fadeIn 0.3s ease;
         }
 
-        .modal.show {
+        .modal.active {
             display: flex;
         }
 
         .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            max-width: 400px;
-            width: 90%;
+            background: var(--bg-secondary);
+            width: 100%;
+            border-radius: 20px 20px 0 0;
+            padding: 24px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUpModal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes slideUpModal {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
         }
 
         .modal-header {
-            font-size: 20px;
-            font-weight: bold;
+            font-size: 18px;
+            font-weight: 800;
             margin-bottom: 20px;
-            color: #333;
-        }
-
-        .modal-actions {
             display: flex;
-            gap: 10px;
-            margin-top: 20px;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
         }
 
-        .modal-actions button {
-            flex: 1;
-            padding: 10px;
+        .modal-close {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8ecff 100%);
+            border: none;
+            font-size: 24px;
+            color: #667eea;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
         }
 
+        .modal-close:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .modal-close:active {
+            transform: scale(0.9);
+        }
+
+        /* Empty State */
         .empty-state {
             text-align: center;
-            padding: 40px;
-            color: #999;
+            padding: 80px 20px;
+            color: var(--text-secondary);
         }
 
         .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
+            font-size: 64px;
+            margin-bottom: 16px;
+            animation: bounce 2s ease infinite;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Success Message */
+        .success-message {
+            position: fixed;
+            bottom: 30px;
+            left: 20px;
+            right: 20px;
+            background: var(--gradient-primary);
+            color: white;
+            padding: 14px 18px;
+            border-radius: 12px;
+            display: none;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 2000;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .section-header {
+            margin-top: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
         }
     </style>
 </head>
 <body>
-    <!-- LOGIN SCREEN -->
-    <div id="loginScreen">
-        <div class="login-header">
-            <h1>🏭 ATOM Склад</h1>
-            <p>Учет товаров</p>
+    <div class="container">
+        <!-- ЭКРАН ВХОДА -->
+        <div class="login-screen" id="loginScreen">
+            <div class="login-content">
+                <div class="logo-top">
+                    <img src="./logo.jpg" alt="Logo" onerror="this.style.display='none'">
+                </div>
+
+                <div class="title-section">
+                    <h1>Учет товаров</h1>
+                </div>
+
+                <div class="illustration-container" id="imgContainer">
+                    <img 
+                        src="./warehouse.jpg" 
+                        alt="Склад"
+                        id="warehouseImg"
+                    >
+                    <div class="fallback-icon">📦</div>
+                </div>
+
+                <button class="btn-login" onclick="handleLogin()">Войти</button>
+            </div>
         </div>
-        
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="emailInput">Email</label>
-                <input type="email" id="emailInput" placeholder="admin@example.com" required>
+
+        <!-- ГЛАВНОЕ ПРИЛОЖЕНИЕ -->
+        <div class="main-app hidden" id="mainApp">
+            <!-- Success message -->
+            <div class="success-message" id="successMsg"></div>
+
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="app-title">Учет товаров</div>
+                <div class="header-buttons">
+                    <button class="header-btn theme-toggle" onclick="toggleTheme()" id="themeToggle">🌙</button>
+                    <button class="header-btn" onclick="openModal('addModal')">✚</button>
+                    <button class="header-btn logout" onclick="logout()">Выход</button>
+                </div>
             </div>
-            
-            <div class="form-group">
-                <label for="passwordInput">Пароль</label>
-                <input type="password" id="passwordInput" placeholder="••••••••" required>
+
+            <!-- Content -->
+            <div class="content">
+                <!-- ГЛАВНАЯ -->
+                <div class="section active" id="home">
+                    <!-- Stats -->
+                    <div class="stat-card">
+                        <div class="stat-label">Всего товаров</div>
+                        <div class="stat-value" id="homeTotal">0</div>
+                        <div class="stat-footer">📦 <span id="homeItems">0</span> видов • ⚠️ <span id="homeWarning">0</span> низких</div>
+                    </div>
+
+                    <!-- Export/Import -->
+                    <div class="export-buttons">
+                        <button class="btn-export" onclick="exportToExcel()">📊 Экспорт</button>
+                        <button class="btn-import" onclick="document.getElementById('importFile').click()">📥 Импорт</button>
+                        <input type="file" id="importFile" accept=".xlsx,.xls" onchange="importFromExcel(event)">
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="items-grid">
+                        <div class="item-box" onclick="switchTab('all')">
+                            <div class="count" id="boxAll">0</div>
+                            <div class="title">Все товары</div>
+                        </div>
+                        <div class="item-box highlight" onclick="switchTab('low')">
+                            <div class="count" id="boxLow">0</div>
+                            <div class="title">Низкие остатки</div>
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <button class="btn-primary" onclick="openModal('addModal')">➕ Добавить товар</button>
+                </div>
+
+                <!-- ВСЕ ТОВАРЫ -->
+                <div class="section" id="all">
+                    <div class="section-header">
+                        <span class="section-title">📋 Все товары</span>
+                        </div>
+                    <div class="tabs-container">
+                        <button class="tab-btn active" onclick="switchTab('all')">Все товары</button>
+                        <button class="tab-btn" onclick="switchTab('low')">Низкие остатки</button>
+                        <button class="btn-back-modal" onclick="switchTab('home')" style="margin-left: auto;"> Меню</button>
+                    </div>
+                    <div id="itemsList" class="items-list"></div>
+                </div>
+
+                <!-- НИЗКИЕ ОСТАТКИ -->
+                <div class="section" id="low">
+                    <div class="section-header">
+                        <span class="section-title">⚠️ Низкие остатки</span>
+                        </div>
+                    <div class="tabs-container">
+                        <button class="tab-btn" onclick="switchTab('all')">Все товары</button>
+                        <button class="tab-btn active" onclick="switchTab('low')">Низкие остатки</button>
+                        <button class="btn-back-modal" onclick="switchTab('home')" style="margin-left: auto;"> Меню</button>
+                    </div>
+                    <div id="lowStockList" class="items-list"></div>
+                </div>
             </div>
-            
-            <button type="submit" id="loginBtn">Войти</button>
-            <div id="loginError"></div>
-        </form>
+        </div>
     </div>
 
-    <!-- MAIN APP -->
-    <div id="mainApp">
-        <div class="app-header">
-            <div class="app-title">🏭 ATOM Склад</div>
-            <div class="user-section">
-                <span>👤 <span id="userEmail"></span></span>
-                <button id="logoutBtn">Выход</button>
-            </div>
-        </div>
-
-        <div class="app-content">
-            <!-- STATS -->
-            <div class="stats">
-                <div class="stat-card">
-                    <div class="stat-number" id="totalItems">0</div>
-                    <div class="stat-label">Всего товаров</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="totalQuantity">0</div>
-                    <div class="stat-label">Единиц в наличии</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="lowStockCount">0</div>
-                    <div class="stat-label">⚠️ Низкие остатки</div>
-                </div>
-            </div>
-
-            <!-- CONTROLS -->
-            <div class="controls">
-                <button class="btn-primary" id="addBtn">➕ Добавить товар</button>
-                <button class="btn-secondary" id="exportBtn">📊 Экспорт Excel</button>
-                <button class="btn-secondary" id="importBtn">📥 Импорт Excel</button>
-                <input type="file" id="importFile" style="display: none;" accept=".xlsx,.xls">
-            </div>
-
-            <!-- ITEMS LIST -->
-            <div id="itemsList" class="items-list"></div>
-        </div>
-    </div>
-
-    <!-- ADD/EDIT MODAL -->
-    <div id="itemModal" class="modal">
+    <!-- МОДАЛЫ -->
+    <div class="modal" id="addModal">
         <div class="modal-content">
-            <div class="modal-header" id="modalTitle">Добавить товар</div>
-            <form id="itemForm">
-                <div class="form-group">
-                    <label for="itemName">Название</label>
-                    <input type="text" id="itemName" required>
-                </div>
-                <div class="form-group">
-                    <label for="itemQuantity">Количество</label>
-                    <input type="number" id="itemQuantity" value="0" required>
-                </div>
-                <div class="form-group">
-                    <label for="itemUnit">Единица измерения</label>
-                    <input type="text" id="itemUnit" placeholder="шт, мл, кг" required>
-                </div>
-                <div class="modal-actions">
-                    <button type="submit" class="btn-primary">Сохранить</button>
-                    <button type="button" id="cancelBtn" class="btn-secondary">Отмена</button>
-                </div>
-            </form>
+            <div class="modal-header">
+                <span>➕ Добавить товар</span>
+                <button class="modal-close" onclick="closeModal('addModal')">✕</button>
+            </div>
+            <button class="btn-back-modal" onclick="closeModal('addModal')">← Назад</button>
+            <div class="form-group">
+                <label>Название</label>
+                <input type="text" id="modalItemName" placeholder="Название товара">
+            </div>
+            <div class="form-group">
+                <label>Количество</label>
+                <input type="number" id="modalItemQty" placeholder="100" min="1">
+            </div>
+            <div class="form-group">
+                <label>Единица</label>
+                <input type="text" id="modalItemUnit" placeholder="шт, кг, л">
+            </div>
+            <button class="btn-primary" onclick="addItemModal()">✓ Добавить</button>
+        </div>
+    </div>
+
+    <div class="modal" id="takeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>➖ Забрать товар</span>
+                <button class="modal-close" onclick="closeModal('takeModal')">✕</button>
+            </div>
+            <button class="btn-back-modal" onclick="closeModal('takeModal')">← Назад</button>
+            <div class="form-group">
+                <label>Товар</label>
+                <div style="padding: 12px; background: var(--bg-card); border: 2px solid var(--border-color); border-radius: 10px; font-size: 14px; font-weight: 600;" id="takeItemInfo"></div>
+            </div>
+            <div class="form-group">
+                <label>Количество</label>
+                <input type="number" id="takeQty" placeholder="1" min="1">
+            </div>
+            <button class="btn-primary" onclick="takeItemConfirm()">✓ Забрать</button>
+        </div>
+    </div>
+
+    <div class="modal" id="addMoreModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>➕ Добавить к товару</span>
+                <button class="modal-close" onclick="closeModal('addMoreModal')">✕</button>
+            </div>
+            <button class="btn-back-modal" onclick="closeModal('addMoreModal')">← Назад</button>
+            <div class="form-group">
+                <label>Товар</label>
+                <div style="padding: 12px; background: var(--bg-card); border: 2px solid var(--border-color); border-radius: 10px; font-size: 14px; font-weight: 600;" id="addMoreItemInfo"></div>
+            </div>
+            <div class="form-group">
+                <label>Количество для добавления</label>
+                <input type="number" id="addMoreQty" placeholder="1" min="1">
+            </div>
+            <button class="btn-primary" onclick="addMoreItemConfirm()">✓ Добавить</button>
+        </div>
+    </div>
+
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>🗑️ Удалить товар</span>
+                <button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
+            </div>
+            <button class="btn-back-modal" onclick="closeModal('deleteModal')">← Назад</button>
+            <div style="padding: 16px; background: #fff5e8; border-radius: 12px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 2px solid #ff6b6b;">
+                <p id="deleteItemInfo" style="margin: 0; color: #ff6b6b;"></p>
+            </div>
+            <button class="btn-primary" style="background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);" onclick="deleteItemConfirm()">✗ Удалить</button>
         </div>
     </div>
 
     <script>
-        // ⚠️ ВСТАВЬТЕ СВОИ КЛЮЧИ SUPABASE ⚠️
-        const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
-        const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
+        // ========== SUPABASE НАСТРОЙКА ==========
+        const SUPABASE_URL = 'https://hltqagfpltxdfftawijf.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsdHFhZ2ZwbHR4ZGZmdGF3aWpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5ODEwMzcsImV4cCI6MjA3OTU1NzAzN30.DNt4LNPJuRYlleLTa8bGgqnL6ScnE76jr65qvY96Rig';
 
         let supabase = null;
-        let items = [];
-        let currentUser = null;
-        let editingItemId = null;
-
-        // Инициализация Supabase
-        function initSupabase() {
-            if (!window.supabase) {
-                console.error('❌ Supabase библиотека не загружена');
-                return false;
-            }
-
-            if (SUPABASE_URL === 'https://YOUR_PROJECT.supabase.co' || SUPABASE_ANON_KEY === 'YOUR_ANON_KEY_HERE') {
-                console.error('❌ Вставьте свои ключи Supabase!');
-                showLoginError('⚠️ Ошибка конфигурации. Вставьте свои ключи Supabase в код.');
-                return false;
-            }
-
+        if (SUPABASE_URL !== 'https://hltqagfpltxdfftawijf.supabase.co' && window.supabase) {
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log('✅ Supabase инициализирован');
-            return true;
         }
 
-        // Показать ошибку входа
-        function showLoginError(msg) {
-            const err = document.getElementById('loginError');
-            err.textContent = msg;
-            err.style.display = 'block';
+        // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+        let currentUser = null;
+        let items = [];
+        let currentEditId = null;
+
+        const tg = window.Telegram?.WebApp;
+        if (tg) tg.ready();
+
+        // ========== ТЕМА ==========
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
         }
 
-        // Скрыть ошибку входа
-        function hideLoginError() {
-            document.getElementById('loginError').style.display = 'none';
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
         }
 
-        // Вход
-        async function handleLogin(e) {
-            e.preventDefault();
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('themeToggle');
+            if (icon) {
+                icon.textContent = theme === 'light' ? '🌙' : '☀️';
+            }
+        }
 
-            const email = document.getElementById('emailInput').value.trim();
-            const password = document.getElementById('passwordInput').value.trim();
-
-            if (!email || !password) {
-                showLoginError('❌ Введите email и пароль');
+        // ========== EXCEL ФУНКЦИИ С ДАТОЙ И ВРЕМЕНЕМ ==========
+        function exportToExcel() {
+            if (items.length === 0) {
+                showMessage('⚠️ Нет данных для экспорта');
                 return;
             }
 
-            console.log('🔐 Попытка входа с:', email);
-
-            try {
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password
-                });
-
-                if (error) {
-                    console.error('❌ Ошибка входа:', error.message);
-                    showLoginError('❌ Неверный email или пароль');
-                    return;
+            const data = items.map(item => {
+                let date = '';
+                let time = '';
+                
+                if (item.created_at) {
+                    const d = new Date(item.created_at);
+                    date = d.toLocaleDateString('ru-RU');
+                    time = d.toLocaleTimeString('ru-RU');
                 }
 
-                currentUser = data.user;
-                console.log('✅ Успешный вход:', currentUser.email);
-                hideLoginError();
-                showMainApp();
+                return {
+                    'ID': item.id,
+                    'Название': item.name,
+                    'Количество': item.quantity,
+                    'Единица': item.unit,
+                    'Дата': date,
+                    'Время': time
+                };
+            });
 
-            } catch (err) {
-                console.error('❌ Ошибка:', err);
-                showLoginError('❌ Ошибка подключения');
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Склад');
+
+            const date = new Date().toISOString().split('T')[0];
+            
+            // Для мобильных устройств используем blob и создаём ссылку для скачивания
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/octet-stream' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `atom-warehouse-${date}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 100);
+
+            showMessage('✅ Экспорт завершен');
+        }
+
+        async function importFromExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                    if (jsonData.length === 0) {
+                        showMessage('⚠️ Файл пустой');
+                        return;
+                    }
+
+                    let imported = 0;
+                    for (const row of jsonData) {
+                        const name = row['Название'] || row['name'];
+                        const qty = parseFloat(row['Количество'] || row['quantity']);
+                        const unit = row['Единица'] || row['unit'];
+
+                        if (name && qty && unit) {
+                            if (supabase) {
+                                await supabase.from('inventory').insert([{
+                                    name, quantity: qty, unit, user_id: currentUser.id, created_at: new Date().toISOString()
+                                }]);
+                            } else {
+                                const id = Math.max(...items.map(i => i.id || 0), 0) + 1;
+                                items.push({ id, name, quantity: qty, unit, created_at: new Date().toISOString() });
+                            }
+                            imported++;
+                        }
+                    }
+
+                    if (supabase) {
+                        await loadItems();
+                    } else {
+                        saveData();
+                        renderHome();
+                        renderAllItems();
+                    }
+
+                    showMessage(`✅ Импортировано: ${imported}`);
+                } catch (error) {
+                    console.error('Ошибка импорта:', error);
+                    showMessage('❌ Ошибка импорта');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            event.target.value = '';
+        }
+
+        // ========== ИНИЦИАЛИЗАЦИЯ ==========
+        async function init() {
+            initTheme();
+
+            if (supabase) {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    currentUser = session.user;
+                    await loadItems();
+                    showMainApp();
+                } else {
+                    showLoginScreen();
+                }
+            } else {
+                items = JSON.parse(localStorage.getItem('inventory')) || [];
+                const savedUser = localStorage.getItem('currentUser');
+                if (savedUser) {
+                    currentUser = { id: savedUser };
+                    renderHome();
+                    showMainApp();
+                } else {
+                    showLoginScreen();
+                }
             }
         }
 
-        // Выход
-        async function handleLogout() {
-            await supabase.auth.signOut();
+        // ========== ЛОГИН ==========
+        async function handleLogin() {
+    // Получаем email и пароль из формы входа (добавим чуть позже)
+    const email = prompt('Введите email:');
+    const password = prompt('Введите пароль:');
+    
+    if (!email || !password) {
+        showMessage('❌ Email и пароль обязательны');
+        return;
+    }
+    
+    if (supabase) {
+        // Пытаемся войти с email и паролем
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        
+        if (error) {
+            console.error('Auth error:', error);
+            showMessage('❌ Неверный email или пароль: ' + error.message);
+            return; // ОСТАНОВКА - не пускаем в приложение
+        }
+        
+        currentUser = data.user;
+        console.log('✅ Вход успешен:', currentUser.email);
+        await loadItems();
+        console.log('Items loaded:', items.length);
+        // ДОБАВЛЕНО - отображаем данные
+        renderHome();
+        renderAllItems();
+        renderLowStock();
+    } else {
+        showMessage('❌ Supabase не подключен');
+        return;
+    }
+    
+    showMainApp();
+}
+
+        // ========== ВЫХОД ==========
+        async function logout() {
+            if (!confirm('Вы уверены?')) return;
+            
+            if (supabase) {
+                await supabase.auth.signOut();
+            } else {
+                localStorage.removeItem('currentUser');
+            }
             currentUser = null;
             items = [];
-            document.getElementById('loginScreen').style.display = 'flex';
-            document.getElementById('mainApp').style.display = 'none';
-            document.getElementById('emailInput').value = '';
-            document.getElementById('passwordInput').value = '';
+            showLoginScreen();
         }
 
-        // Показать главное приложение
-        async function showMainApp() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'block';
-            document.getElementById('userEmail').textContent = currentUser.email;
-            
-            await loadItems();
-            renderItems();
-        }
-
-        // Загрузить товары из Supabase
+        // ========== ЗАГРУЗКА ТОВАРОВ ==========
         async function loadItems() {
-            console.log('📦 Загрузка товаров для:', currentUser.id);
-
+            if (!supabase) return;
+            
             const { data, error } = await supabase
                 .from('inventory')
                 .select('*')
                 .eq('user_id', currentUser.id)
-                .order('created_at', { ascending: false });
-
+                .order('id', { ascending: true });
+            
             if (error) {
-                console.error('❌ Ошибка загрузки:', error);
+                console.error('Ошибка загрузки:', error);
                 return;
             }
-
+            
             items = data || [];
-            console.log('✅ Загружено товаров:', items.length);
+            renderHome();
+            renderAllItems();
+            renderLowStock();
         }
 
-        // Отрисовка товаров
-        function renderItems() {
+        // ========== ДОБАВИТЬ ТОВАР ==========
+        async function addItemModal() {
+            const name = document.getElementById('modalItemName').value.trim();
+            const qty = parseFloat(document.getElementById('modalItemQty').value);
+            const unit = document.getElementById('modalItemUnit').value.trim();
+
+            if (!name || !qty || !unit) {
+                showMessage('Заполните все поля');
+                return;
+            }
+
+            const now = new Date().toISOString();
+
+            if (supabase) {
+                const { error } = await supabase.from('inventory').insert([{
+                    name, quantity: qty, unit, user_id: currentUser.id, created_at: now
+                }]);
+                if (error) {
+                    showMessage('Ошибка: ' + error.message);
+                    return;
+                }
+                await loadItems();
+            } else {
+                const id = Math.max(...items.map(i => i.id || 0), 0) + 1;
+                items.push({ id, name, quantity: qty, unit, created_at: now });
+                saveData();
+                renderHome();
+                renderAllItems();
+            }
+
+            closeModal('addModal');
+            document.getElementById('modalItemName').value = '';
+            document.getElementById('modalItemQty').value = '';
+            document.getElementById('modalItemUnit').value = '';
+            showMessage('✓ Добавлено');
+        }
+
+        // ========== ЗАБРАТЬ ТОВАР ==========
+        function openTakeModal(id) {
+            currentEditId = id;
+            const item = items.find(i => i.id === id);
+            document.getElementById('takeItemInfo').textContent = `${item.name} (${item.quantity} ${item.unit})`;
+            document.getElementById('takeQty').value = '';
+            document.getElementById('takeQty').max = item.quantity;
+            openModal('takeModal');
+        }
+
+        async function takeItemConfirm() {
+            const qty = parseFloat(document.getElementById('takeQty').value);
+            const item = items.find(i => i.id === currentEditId);
+
+            if (!qty || qty <= 0 || qty > item.quantity) {
+                showMessage('Неверное количество');
+                return;
+            }
+
+            const newQty = item.quantity - qty;
+
+            if (supabase) {
+                const { error } = await supabase.from('inventory')
+                    .update({ quantity: newQty }).eq('id', currentEditId);
+                if (error) {
+                    showMessage('Ошибка: ' + error.message);
+                    return;
+                }
+                await loadItems();
+            } else {
+                item.quantity = newQty;
+                saveData();
+                renderHome();
+                renderAllItems();
+                renderLowStock();
+            }
+
+            closeModal('takeModal');
+            showMessage(`✓ Забрано ${qty}`);
+        }
+
+        // ========== ДОБАВИТЬ К ТОВАРУ ==========
+        function openAddMoreModal(id) {
+            currentEditId = id;
+            const item = items.find(i => i.id === id);
+            document.getElementById('addMoreItemInfo').textContent = `${item.name} (текущий остаток: ${item.quantity} ${item.unit})`;
+            document.getElementById('addMoreQty').value = '';
+            openModal('addMoreModal');
+        }
+
+        async function addMoreItemConfirm() {
+            const qty = parseFloat(document.getElementById('addMoreQty').value);
+            const item = items.find(i => i.id === currentEditId);
+
+            if (!qty || qty <= 0) {
+                showMessage('Неверное количество');
+                return;
+            }
+
+            const newQty = item.quantity + qty;
+
+            if (supabase) {
+                const { error } = await supabase.from('inventory')
+                    .update({ quantity: newQty }).eq('id', currentEditId);
+                if (error) {
+                    showMessage('Ошибка: ' + error.message);
+                    return;
+                }
+                await loadItems();
+            } else {
+                item.quantity = newQty;
+                saveData();
+                renderHome();
+                renderAllItems();
+                renderLowStock();
+            }
+
+            closeModal('addMoreModal');
+            showMessage(`✓ Добавлено ${qty}`);
+        }
+
+        // ========== УДАЛИТЬ ТОВАР ==========
+        function openDeleteModal(id) {
+            currentEditId = id;
+            const item = items.find(i => i.id === id);
+            document.getElementById('deleteItemInfo').textContent = `${item.name} (${item.quantity} ${item.unit})`;
+            openModal('deleteModal');
+        }
+
+        async function deleteItemConfirm() {
+            if (supabase) {
+                const { error } = await supabase.from('inventory').delete().eq('id', currentEditId);
+                if (error) {
+                    showMessage('Ошибка: ' + error.message);
+                    return;
+                }
+                await loadItems();
+            } else {
+                items = items.filter(i => i.id !== currentEditId);
+                saveData();
+                renderHome();
+                renderAllItems();
+                renderLowStock();
+            }
+
+            closeModal('deleteModal');
+            showMessage('✓ Удалено');
+        }
+
+        // ========== ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ ==========
+        function showLoginScreen() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        function showMainApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            renderHome();
+        }
+
+        // ========== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ==========
+        function switchTab(tab) {
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            
+            if (event?.target) {
+                const btn = event.target.closest('.tab-btn');
+                if (btn) btn.classList.add('active');
+            }
+            if (tab === 'all') renderAllItems();
+            if (tab === 'low') renderLowStock();
+            if (tab === 'home') renderHome();
+        }
+
+        // ========== РЕНДЕРИНГ ==========
+        function renderHome() {
+            const total = items.reduce((sum, item) => sum + item.quantity, 0);
+            const totalItems = items.length;
+            const lowCount = items.filter(i => i.quantity <= 10).length;
+
+            document.getElementById('homeTotal').textContent = total;
+            document.getElementById('homeItems').textContent = totalItems;
+            document.getElementById('homeWarning').textContent = lowCount;
+            document.getElementById('boxAll').textContent = totalItems;
+            document.getElementById('boxLow').textContent = lowCount;
+        }
+
+        function renderAllItems() {
             const list = document.getElementById('itemsList');
-
             if (items.length === 0) {
-                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div>Товаров не добавлено</div>';
-            } else {
-                list.innerHTML = items.map(item => `
-                    <div class="item">
-                        <div class="item-info">
-                            <div class="item-name">${item.name}</div>
-                            <div class="item-details">${item.unit}</div>
-                        </div>
-                        <div class="item-quantity">${item.quantity}</div>
-                        <div class="item-actions">
-                            <button class="btn-sm" onclick="editItem(${item.id})">✏️ Изменить</button>
-                            <button class="btn-sm btn-danger" onclick="deleteItem(${item.id})">🗑️ Удалить</button>
-                        </div>
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>Товары не добавлены</p></div>';
+                return;
+            }
+
+            list.innerHTML = items.map(item => `
+                <div class="item-card ${item.quantity <= 10 ? 'low-stock' : ''}">
+                    <div class="item-info">
+                        <h3>#${item.id} ${item.name}</h3>
+                        <p>${item.quantity} ${item.unit}</p>
                     </div>
-                `).join('');
-            }
-
-            updateStats();
+                        <div class="item-actions">
+                        <button class="action-btn" onclick="openAddMoreModal(${item.id})">+</button>
+                        <button class="action-btn" onclick="openTakeModal(${item.id})">−</button>
+                        <button class="action-btn" onclick="openDeleteModal(${item.id})">✕</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        // Обновить статистику
-        function updateStats() {
-            document.getElementById('totalItems').textContent = items.length;
-            document.getElementById('totalQuantity').textContent = items.reduce((sum, item) => sum + item.quantity, 0);
-            document.getElementById('lowStockCount').textContent = items.filter(item => item.quantity < 10).length;
-        }
+        function renderLowStock() {
+            const list = document.getElementById('lowStockList');
+            const lowItems = items.filter(i => i.quantity <= 10);
 
-        // Добавить товар
-        document.getElementById('itemForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const name = document.getElementById('itemName').value.trim();
-            const quantity = parseInt(document.getElementById('itemQuantity').value);
-            const unit = document.getElementById('itemUnit').value.trim();
-
-            if (!name || !unit) {
-                alert('Заполните все поля');
+            if (lowItems.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✓</div><p>Все товары в норме</p></div>';
                 return;
             }
 
-            console.log('➕ Добавление товара:', name);
+            list.innerHTML = lowItems.map(item => `
+                <div class="item-card low-stock">
+                    <div class="item-info">
+                        <h3>#${item.id} ${item.name}</h3>
+                        <p>${item.quantity} ${item.unit}</p>
+                    </div>
+                    <div class="item-qty">${item.quantity}</div>
+                    <div class="item-actions">
+                        <button class="action-btn" onclick="openTakeModal(${item.id})">−</button>
+                    </div>
+                </div>
+            `).join('');
+        }
 
-            const newItem = {
-                name,
-                quantity,
-                unit,
-                user_id: currentUser.id
+        // ========== УТИЛИТЫ ==========
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function saveData() {
+            localStorage.setItem('inventory', JSON.stringify(items));
+        }
+
+        function showMessage(text) {
+            const msg = document.getElementById('successMsg');
+            msg.textContent = text;
+            msg.classList.add('show');
+            setTimeout(() => msg.classList.remove('show'), 2500);
+        }
+
+        // Обработка загрузки изображения
+        const warehouseImg = document.getElementById('warehouseImg');
+        const imgContainer = document.getElementById('imgContainer');
+
+        if (warehouseImg) {
+            warehouseImg.onerror = function() {
+                imgContainer?.classList.add('error');
             };
-
-            const { error } = await supabase
-                .from('inventory')
-                .insert([newItem]);
-
-            if (error) {
-                console.error('❌ Ошибка сохранения:', error);
-                alert('Ошибка сохранения товара');
-                return;
-            }
-
-            console.log('✅ Товар добавлен');
-            document.getElementById('itemModal').classList.remove('show');
-            document.getElementById('itemForm').reset();
-            await loadItems();
-            renderItems();
-        });
-
-        // Удалить товар
-        async function deleteItem(id) {
-            if (!confirm('Удалить товар?')) return;
-
-            const { error } = await supabase
-                .from('inventory')
-                .delete()
-                .eq('id', id);
-
-            if (error) {
-                console.error('❌ Ошибка удаления:', error);
-                return;
-            }
-
-            await loadItems();
-            renderItems();
+            warehouseImg.onload = function() {
+                imgContainer?.classList.remove('error');
+            };
         }
 
-        // Кнопки управления
-        document.getElementById('addBtn').addEventListener('click', () => {
-            document.getElementById('modalTitle').textContent = 'Добавить товар';
-            document.getElementById('itemForm').reset();
-            document.getElementById('itemModal').classList.add('show');
-        });
-
-        document.getElementById('cancelBtn').addEventListener('click', () => {
-            document.getElementById('itemModal').classList.remove('show');
-        });
-
-        document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-        document.getElementById('loginForm').addEventListener('submit', handleLogin);
-
-        // Инициализация
-        async function init() {
-            if (!initSupabase()) return;
-
-            const { data: { session } } = await supabase.auth.getSession();
-
-            if (session) {
-                currentUser = session.user;
-                await showMainApp();
-            } else {
-                document.getElementById('loginScreen').style.display = 'flex';
-            }
-        }
-
-        // Запуск при загрузке страницы
-        window.addEventListener('load', init);
+        // ========== ЗАПУСК ПРИЛОЖЕНИЯ ==========
+        init();
     </script>
 </body>
 </html>
