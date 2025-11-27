@@ -1146,12 +1146,9 @@
         const SUPABASE_URL = 'https://dhfbrncucdzcdsyyxirx.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoZmJybmN1Y2R6Y2RzeXl4aXJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM4MzkzNTUsImV4cCI6MjA3OTQxNTM1NX0.ZJ1AUGyViyflHIBonqT7TF2d-FBqFprHtQQhEe2YaOs';
 
-         let supabase = null;
-        if (window.supabase) {
+        let supabase = null;
+        if (SUPABASE_URL !== 'https://dhfbrncucdzcdsyyxirx.supabase.co' && window.supabase) {
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log('✓ Supabase initialized');
-        } else {
-            console.warn('⚠️ Supabase library not loaded');
         }
 
         // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
@@ -1315,41 +1312,17 @@
         }
 
         // ========== ЛОГИН ==========
-         async function handleLogin() {
+        async function handleLogin() {
     if (supabase) {
-        // Проверяем есть ли текущая сессия
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-            console.error('Session check error:', sessionError);
-            showMessage('Ошибка проверки сессии');
+        const { data, error } = await supabase.auth.signInAnonymously();
+        if (error) {
+            console.error('Auth error:', error);
+            showMessage('Ошибка входа: ' + error.message);
             return;
         }
-
-        if (session?.user) {
-            // Пользователь уже залогинен
-            currentUser = session.user;
-            console.log('✓ Current user from session:', currentUser.id);
-        } else {
-            // Создаём нового пользователя (email auth требует реального email)
-            console.error('⚠️ Anonymous auth не поддерживается RLS политикой');
-            showMessage('❌ Требуется Email регистрация');
-            
-            // Для тестирования - используем локальное хранилище
-            const username = `User_${Math.random().toString(36).substr(2, 9)}`;
-            localStorage.setItem('currentUser', username);
-            currentUser = { id: username };
-            console.log('ℹ️ Using local user:', currentUser.id);
-        }
-        
-        try {
-            await loadItems();
-            console.log('✓ Items loaded:', items.length);
-        } catch (error) {
-            console.error('❌ Error loading items:', error);
-            showMessage('Ошибка загрузки товаров');
-            return;
-        }
+        currentUser = data.user;
+        console.log('Current user:', currentUser.id);
+        await loadItems();
         console.log('Items loaded:', items.length);
         // ДОБАВЛЕНО - отображаем после загрузки
         renderHome();
@@ -1379,18 +1352,8 @@
         }
 
         // ========== ЗАГРУЗКА ТОВАРОВ ==========
-       async function loadItems() {
-            if (!supabase) {
-                console.warn('⚠️ Supabase not available');
-                return;
-            }
-            
-            if (!currentUser?.id) {
-                console.error('❌ No currentUser.id');
-                return;
-            }
-            
-            console.log('📥 Loading items for user:', currentUser.id);
+        async function loadItems() {
+            if (!supabase) return;
             
             const { data, error } = await supabase
                 .from('inventory')
@@ -1399,17 +1362,11 @@
                 .order('id', { ascending: true });
             
             if (error) {
-                console.error('❌ Load error:', {
-                    message: error.message,
-                    code: error.code,
-                    details: error.details
-                });
-                showMessage('Ошибка загрузки: ' + error.message);
+                console.error('Ошибка загрузки:', error);
                 return;
             }
             
             items = data || [];
-            console.log('✓ Loaded items:', items.length);
             renderHome();
             renderAllItems();
             renderLowStock();
@@ -1426,38 +1383,16 @@
                 return;
             }
 
-            if (!currentUser) {
-                showMessage('❌ Ошибка: пользователь не определен');
-                console.error('currentUser is null!');
-                return;
-            }
-
             const now = new Date().toISOString();
-            const insertData = {
-                name, 
-                quantity: qty, 
-                unit, 
-                user_id: currentUser.id, 
-                created_at: now
-            };
-
-            console.log('📝 Inserting:', insertData);
 
             if (supabase) {
-                const { data, error } = await supabase.from('inventory').insert([insertData]);
-                
+                const { error } = await supabase.from('inventory').insert([{
+                    name, quantity: qty, unit, user_id: currentUser.id, created_at: now
+                }]);
                 if (error) {
-                    console.error('❌ Supabase INSERT error:', {
-                        message: error.message,
-                        code: error.code,
-                        details: error.details,
-                        hint: error.hint
-                    });
-                    showMessage('❌ Ошибка БД: ' + error.message);
+                    showMessage('Ошибка: ' + error.message);
                     return;
                 }
-                
-                console.log('✓ Inserted successfully:', data);
                 await loadItems();
             } else {
                 const id = Math.max(...items.map(i => i.id || 0), 0) + 1;
