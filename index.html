@@ -1143,11 +1143,11 @@
 
     <script>
         // ========== SUPABASE НАСТРОЙКА ==========
-        const SUPABASE_URL = 'https://hltqagfpltxdfftawijf.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsdHFhZ2ZwbHR4ZGZmdGF3aWpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5ODEwMzcsImV4cCI6MjA3OTU1NzAzN30.DNt4LNPJuRYlleLTa8bGgqnL6ScnE76jr65qvY96Rig';
+        const SUPABASE_URL = 'https://dhfbrncucdzcdsyyxirx.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoZmJybmN1Y2R6Y2RzeXl4aXJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM4MzkzNTUsImV4cCI6MjA3OTQxNTM1NX0.ZJ1AUGyViyflHIBonqT7TF2d-FBqFprHtQQhEe2YaOs';
 
         let supabase = null;
-        if (SUPABASE_URL !== 'https://hltqagfpltxdfftawijf.supabase.co' && window.supabase) {
+        if (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && window.supabase) {
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
 
@@ -1313,43 +1313,21 @@
 
         // ========== ЛОГИН ==========
         async function handleLogin() {
-    // Получаем email и пароль из формы входа (добавим чуть позже)
-    const email = prompt('Введите email:');
-    const password = prompt('Введите пароль:');
-    
-    if (!email || !password) {
-        showMessage('❌ Email и пароль обязательны');
-        return;
-    }
-    
-    if (supabase) {
-        // Пытаемся войти с email и паролем
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
-        
-        if (error) {
-            console.error('Auth error:', error);
-            showMessage('❌ Неверный email или пароль: ' + error.message);
-            return; // ОСТАНОВКА - не пускаем в приложение
+            if (supabase) {
+                const { data, error } = await supabase.auth.signInAnonymously();
+                if (error) {
+                    showMessage('Ошибка входа: ' + error.message);
+                    return;
+                }
+                currentUser = data.user;
+                await loadItems();
+            } else {
+                const username = `User_${Math.random().toString(36).substr(2, 9)}`;
+                localStorage.setItem('currentUser', username);
+                currentUser = { id: username };
+            }
+            showMainApp();
         }
-        
-        currentUser = data.user;
-        console.log('✅ Вход успешен:', currentUser.email);
-        await loadItems();
-        console.log('Items loaded:', items.length);
-        // ДОБАВЛЕНО - отображаем данные
-        renderHome();
-        renderAllItems();
-        renderLowStock();
-    } else {
-        showMessage('❌ Supabase не подключен');
-        return;
-    }
-    
-    showMainApp();
-}
 
         // ========== ВЫХОД ==========
         async function logout() {
