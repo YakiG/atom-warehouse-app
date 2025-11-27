@@ -19,7 +19,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
         }
 
         /* LOGIN SCREEN */
@@ -75,20 +74,17 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        button {
-            padding: 12px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-
         #loginBtn {
             width: 100%;
+            padding: 12px;
             background: #667eea;
             color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 16px;
         }
 
         #loginBtn:hover {
@@ -98,19 +94,6 @@
         #loginBtn:disabled {
             background: #ccc;
             cursor: not-allowed;
-        }
-
-        .toggle-signup {
-            text-align: center;
-            margin-top: 15px;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .toggle-signup a {
-            color: #667eea;
-            cursor: pointer;
-            text-decoration: underline;
         }
 
         #loginError {
@@ -132,6 +115,7 @@
             border-radius: 12px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             max-width: 1000px;
+            margin: 0 auto;
         }
 
         .app-header {
@@ -141,6 +125,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-radius: 12px 12px 0 0;
         }
 
         .app-title {
@@ -160,6 +145,9 @@
             color: white;
             border: 1px solid white;
             padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
         }
 
         #logoutBtn:hover {
@@ -201,6 +189,16 @@
             gap: 10px;
             margin-bottom: 20px;
             flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
         }
 
         .btn-primary {
@@ -289,6 +287,7 @@
             background: #fcc;
         }
 
+        /* MODAL */
         .modal {
             display: none;
             position: fixed;
@@ -354,8 +353,8 @@
         
         <form id="loginForm">
             <div class="form-group">
-                <label for="usernameInput">Логин</label>
-                <input type="text" id="usernameInput" placeholder="admin" required>
+                <label for="emailInput">Email</label>
+                <input type="email" id="emailInput" placeholder="admin@example.com" required>
             </div>
             
             <div class="form-group">
@@ -379,6 +378,7 @@
         </div>
 
         <div class="app-content">
+            <!-- STATS -->
             <div class="stats">
                 <div class="stat-card">
                     <div class="stat-number" id="totalItems">0</div>
@@ -394,18 +394,23 @@
                 </div>
             </div>
 
+            <!-- CONTROLS -->
             <div class="controls">
                 <button class="btn-primary" id="addBtn">➕ Добавить товар</button>
+                <button class="btn-secondary" id="exportBtn">📊 Экспорт Excel</button>
+                <button class="btn-secondary" id="importBtn">📥 Импорт Excel</button>
+                <input type="file" id="importFile" style="display: none;" accept=".xlsx,.xls">
             </div>
 
+            <!-- ITEMS LIST -->
             <div id="itemsList" class="items-list"></div>
         </div>
     </div>
 
-    <!-- ADD MODAL -->
+    <!-- ADD/EDIT MODAL -->
     <div id="itemModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">Добавить товар</div>
+            <div class="modal-header" id="modalTitle">Добавить товар</div>
             <form id="itemForm">
                 <div class="form-group">
                     <label for="itemName">Название</label>
@@ -428,90 +433,74 @@
     </div>
 
     <script>
-        // ⚠️ ВСТАВЬТЕ ВАШИ КЛЮЧИ SUPABASE ⚠️
-        const SUPABASE_URL = 'https://hltqagfpltxdfftawijf.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsdHFhZ2ZwbHR4ZGZmdGF3aWpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5ODEwMzcsImV4cCI6MjA3OTU1NzAzN30.DNt4LNPJuRYlleLTa8bGgqnL6ScnE76jr65qvY96Rig';
+        // ⚠️ ВСТАВЬТЕ СВОИ КЛЮЧИ SUPABASE ⚠️
+        const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
 
         let supabase = null;
         let items = [];
         let currentUser = null;
+        let editingItemId = null;
 
         // Инициализация Supabase
         function initSupabase() {
             if (!window.supabase) {
-                console.error('❌ Supabase не загружена');
+                console.error('❌ Supabase библиотека не загружена');
                 return false;
             }
 
-            try {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                console.log('✅ Supabase инициализирована');
-                return true;
-            } catch (err) {
-                console.error('❌ Ошибка Supabase:', err);
+            if (SUPABASE_URL === 'https://YOUR_PROJECT.supabase.co' || SUPABASE_ANON_KEY === 'YOUR_ANON_KEY_HERE') {
+                console.error('❌ Вставьте свои ключи Supabase!');
+                showLoginError('⚠️ Ошибка конфигурации. Вставьте свои ключи Supabase в код.');
                 return false;
             }
+
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('✅ Supabase инициализирован');
+            return true;
         }
 
+        // Показать ошибку входа
         function showLoginError(msg) {
-            document.getElementById('loginError').textContent = msg;
-            document.getElementById('loginError').style.display = 'block';
+            const err = document.getElementById('loginError');
+            err.textContent = msg;
+            err.style.display = 'block';
         }
 
+        // Скрыть ошибку входа
         function hideLoginError() {
             document.getElementById('loginError').style.display = 'none';
         }
 
+        // Вход
         async function handleLogin(e) {
             e.preventDefault();
 
-            const username = document.getElementById('usernameInput').value.trim();
+            const email = document.getElementById('emailInput').value.trim();
             const password = document.getElementById('passwordInput').value.trim();
 
-            if (!username || !password) {
-                showLoginError('❌ Введите логин и пароль');
+            if (!email || !password) {
+                showLoginError('❌ Введите email и пароль');
                 return;
             }
 
-            console.log('🔐 Попытка входа:', username);
+            console.log('🔐 Попытка входа с:', email);
 
             try {
-                // Вход через Supabase используя email
                 const { data, error } = await supabase.auth.signInWithPassword({
-                    email: username + '@atom-warehouse.local',
-                    password: password
+                    email,
+                    password
                 });
 
                 if (error) {
                     console.error('❌ Ошибка входа:', error.message);
-                    
-                    // Если пользователя нет - регистрируем его
-                    if (error.status === 400 && error.message.includes('Invalid login credentials')) {
-                        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-                            email: username + '@atom-warehouse.local',
-                            password: password
-                        });
-
-                        if (signUpError) {
-                            showLoginError('❌ Ошибка регистрации');
-                            return;
-                        }
-
-                        currentUser = signUpData.user;
-                        console.log('✅ Новый пользователь создан:', username);
-                    } else {
-                        showLoginError('❌ Неверный логин или пароль');
-                        return;
-                    }
-                } else {
-                    currentUser = data.user;
-                    console.log('✅ Успешный вход:', username);
+                    showLoginError('❌ Неверный email или пароль');
+                    return;
                 }
 
-                localStorage.setItem('currentUser', username);
-                localStorage.setItem('currentUserEmail', currentUser.email);
+                currentUser = data.user;
+                console.log('✅ Успешный вход:', currentUser.email);
                 hideLoginError();
-                await loadItems();
                 showMainApp();
 
             } catch (err) {
@@ -520,29 +509,30 @@
             }
         }
 
+        // Выход
         async function handleLogout() {
             await supabase.auth.signOut();
             currentUser = null;
             items = [];
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('currentUserEmail');
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('mainApp').style.display = 'none';
-            document.getElementById('usernameInput').value = '';
+            document.getElementById('emailInput').value = '';
             document.getElementById('passwordInput').value = '';
         }
 
+        // Показать главное приложение
         async function showMainApp() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
-            document.getElementById('userEmail').textContent = currentUser.username;
+            document.getElementById('userEmail').textContent = currentUser.email;
             
             await loadItems();
             renderItems();
         }
 
+        // Загрузить товары из Supabase
         async function loadItems() {
-            console.log('📦 Загрузка товаров...');
+            console.log('📦 Загрузка товаров для:', currentUser.id);
 
             const { data, error } = await supabase
                 .from('inventory')
@@ -552,7 +542,6 @@
 
             if (error) {
                 console.error('❌ Ошибка загрузки:', error);
-                items = [];
                 return;
             }
 
@@ -560,6 +549,7 @@
             console.log('✅ Загружено товаров:', items.length);
         }
 
+        // Отрисовка товаров
         function renderItems() {
             const list = document.getElementById('itemsList');
 
@@ -574,7 +564,8 @@
                         </div>
                         <div class="item-quantity">${item.quantity}</div>
                         <div class="item-actions">
-                            <button class="btn-sm btn-danger" onclick="deleteItem('${item.id}')">🗑️ Удалить</button>
+                            <button class="btn-sm" onclick="editItem(${item.id})">✏️ Изменить</button>
+                            <button class="btn-sm btn-danger" onclick="deleteItem(${item.id})">🗑️ Удалить</button>
                         </div>
                     </div>
                 `).join('');
@@ -583,12 +574,14 @@
             updateStats();
         }
 
+        // Обновить статистику
         function updateStats() {
             document.getElementById('totalItems').textContent = items.length;
             document.getElementById('totalQuantity').textContent = items.reduce((sum, item) => sum + item.quantity, 0);
             document.getElementById('lowStockCount').textContent = items.filter(item => item.quantity < 10).length;
         }
 
+        // Добавить товар
         document.getElementById('itemForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -601,12 +594,13 @@
                 return;
             }
 
+            console.log('➕ Добавление товара:', name);
+
             const newItem = {
                 name,
                 quantity,
                 unit,
-                user_id: currentUser.id,
-                created_at: new Date().toISOString()
+                user_id: currentUser.id
             };
 
             const { error } = await supabase
@@ -626,6 +620,7 @@
             renderItems();
         });
 
+        // Удалить товар
         async function deleteItem(id) {
             if (!confirm('Удалить товар?')) return;
 
@@ -643,7 +638,10 @@
             renderItems();
         }
 
+        // Кнопки управления
         document.getElementById('addBtn').addEventListener('click', () => {
+            document.getElementById('modalTitle').textContent = 'Добавить товар';
+            document.getElementById('itemForm').reset();
             document.getElementById('itemModal').classList.add('show');
         });
 
@@ -658,21 +656,17 @@
         async function init() {
             if (!initSupabase()) return;
 
-            const savedUserEmail = localStorage.getItem('currentUserEmail');
-            
-            if (savedUserEmail) {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                    currentUser = user;
-                    await loadItems();
-                    showMainApp();
-                    return;
-                }
-            }
+            const { data: { session } } = await supabase.auth.getSession();
 
-            document.getElementById('loginScreen').style.display = 'flex';
+            if (session) {
+                currentUser = session.user;
+                await showMainApp();
+            } else {
+                document.getElementById('loginScreen').style.display = 'flex';
+            }
         }
 
+        // Запуск при загрузке страницы
         window.addEventListener('load', init);
     </script>
 </body>
