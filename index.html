@@ -1146,9 +1146,12 @@
         const SUPABASE_URL = 'https://dhfbrncucdzcdsyyxirx.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoZmJybmN1Y2R6Y2RzeXl4aXJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM4MzkzNTUsImV4cCI6MjA3OTQxNTM1NX0.ZJ1AUGyViyflHIBonqT7TF2d-FBqFprHtQQhEe2YaOs';
 
-        let supabase = null;
-        if (SUPABASE_URL !== 'https://dhfbrncucdzcdsyyxirx.supabase.co' && window.supabase) {
+         let supabase = null;
+        if (window.supabase) {
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('✓ Supabase initialized');
+        } else {
+            console.warn('⚠️ Supabase library not loaded');
         }
 
         // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
