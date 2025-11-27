@@ -1315,17 +1315,41 @@
         }
 
         // ========== ЛОГИН ==========
-        async function handleLogin() {
+         async function handleLogin() {
     if (supabase) {
-        const { data, error } = await supabase.auth.signInAnonymously();
-        if (error) {
-            console.error('Auth error:', error);
-            showMessage('Ошибка входа: ' + error.message);
+        // Проверяем есть ли текущая сессия
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+            console.error('Session check error:', sessionError);
+            showMessage('Ошибка проверки сессии');
             return;
         }
-        currentUser = data.user;
-        console.log('Current user:', currentUser.id);
-        await loadItems();
+
+        if (session?.user) {
+            // Пользователь уже залогинен
+            currentUser = session.user;
+            console.log('✓ Current user from session:', currentUser.id);
+        } else {
+            // Создаём нового пользователя (email auth требует реального email)
+            console.error('⚠️ Anonymous auth не поддерживается RLS политикой');
+            showMessage('❌ Требуется Email регистрация');
+            
+            // Для тестирования - используем локальное хранилище
+            const username = `User_${Math.random().toString(36).substr(2, 9)}`;
+            localStorage.setItem('currentUser', username);
+            currentUser = { id: username };
+            console.log('ℹ️ Using local user:', currentUser.id);
+        }
+        
+        try {
+            await loadItems();
+            console.log('✓ Items loaded:', items.length);
+        } catch (error) {
+            console.error('❌ Error loading items:', error);
+            showMessage('Ошибка загрузки товаров');
+            return;
+        }
         console.log('Items loaded:', items.length);
         // ДОБАВЛЕНО - отображаем после загрузки
         renderHome();
