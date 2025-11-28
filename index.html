@@ -1372,24 +1372,36 @@ if (window.supabase) {
 
         // ========== ЗАГРУЗКА ТОВАРОВ ==========
         async function loadItems() {
-            if (!supabase) return;
-            
-            const { data, error } = await supabase
-                .from('inventory')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .order('id', { ascending: true });
-            
-            if (error) {
-                console.error('Ошибка загрузки:', error);
-                return;
-            }
-            
-            items = data || [];
-            renderHome();
-            renderAllItems();
-            renderLowStock();
+    if (!supabase || !currentUser) {
+        console.error('Supabase не подключен или пользователь не авторизован');
+        return;
+    }
+    
+    try {
+        const { data, error } = await supabase
+            .from('inventory')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false });
+        
+        if (error) {
+            console.error('Ошибка загрузки:', error);
+            alert('Ошибка: ' + error.message);
+            return;
         }
+        
+        items = data || [];
+        console.log('✓ Загружено товаров:', items.length);
+        
+        renderHome();
+        renderAllItems();
+        renderLowStock();
+        
+    } catch (err) {
+        console.error('Ошибка:', err);
+        alert('Ошибка загрузки: ' + err.message);
+    }
+}
 
         // ========== ДОБАВИТЬ ТОВАР ==========
         async function addItemModal() {
