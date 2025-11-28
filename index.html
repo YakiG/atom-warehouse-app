@@ -144,22 +144,6 @@
             backdrop-filter: blur(10px);
         }
 
- .logo-top2 {
-            width: 180px;    /* ← Ширина логотипа */
-            height: 40px;    /* ← Высота логотипа */
-            margin-bottom: 20px;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            border: 3px solid rgba(255, 255, 255, 0.2);
-            animation: scaleIn 0.8s ease 0.2s backwards;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-        }
-        
         @keyframes scaleIn {
             from {
                 opacity: 0;
@@ -1010,9 +994,7 @@
 
             <!-- Top Bar -->
             <div class="top-bar">
-                <div class="logo-top2">
-                    <img src="./logo.jpg" alt="Logo" onerror="this.style.display='none'">
-                </div>
+                <div class="app-title">Учет товаров</div>
                 <div class="header-buttons">
                     <button class="header-btn theme-toggle" onclick="toggleTheme()" id="themeToggle">🌙</button>
                     <button class="header-btn" onclick="openModal('addModal')">✚</button>
