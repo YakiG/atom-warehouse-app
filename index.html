@@ -1183,48 +1183,54 @@ if (window.supabase) {
         }
 
         // ========== EXCEL ФУНКЦИИ С ДАТОЙ И ВРЕМЕНЕМ ==========
-       function exportToExcel() {
-    if (items.length === 0) {
-        showMessage('Нечего экспортировать');
-        return;
-    }
-    
-    // Создаём CSV
-    let csv = 'ID,Название,Количество,Единица,Дата\n';
-    
-    items.forEach(item => {
-        let date = '';
-        if (item.createdat) {
-            const d = new Date(item.createdat);
-            date = d.toLocaleDateString('ru-RU');
+        function exportToExcel() {
+            if (items.length === 0) {
+                showMessage('⚠️ Нет данных для экспорта');
+                return;
+            }
+
+            const data = items.map(item => {
+                let date = '';
+                let time = '';
+                
+                if (item.created_at) {
+                    const d = new Date(item.created_at);
+                    date = d.toLocaleDateString('ru-RU');
+                    time = d.toLocaleTimeString('ru-RU');
+                }
+
+                return {
+                    'ID': item.id,
+                    'Название': item.name,
+                    'Количество': item.quantity,
+                    'Единица': item.unit,
+                    'Дата': date,
+                    'Время': time
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Склад');
+
+            const date = new Date().toISOString().split('T')[0];
+            
+            // Для мобильных устройств используем blob и создаём ссылку для скачивания
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/octet-stream' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `atom-warehouse-${date}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 100);
+
+            showMessage('✅ Экспорт завершен');
         }
-        csv += `"${item.id}","${item.name}",${item.quantity},"${item.unit}","${date}"\n`;
-    });
-
-    // Копируем в буфер обмена
-    try {
-        navigator.clipboard.writeText(csv).then(() => {
-            showMessage('✓ Скопировано! Вставьте Ctrl+V в Excel');
-        }).catch(err => {
-            fallbackDownload(csv);
-        });
-    } catch (err) {
-        fallbackDownload(csv);
-    }
-}
-
-function fallbackDownload(csv) {
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `atom-warehouse-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-    showMessage('✓ Файл скачан!');
-}
 
         async function importFromExcel(event) {
             const file = event.target.files[0];
