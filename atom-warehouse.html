@@ -1143,13 +1143,14 @@
 
     <script>
         // ========== SUPABASE НАСТРОЙКА ==========
-        const SUPABASE_URL = 'https://hltqagfpltxdfftawijf.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsdHFhZ2ZwbHR4ZGZmdGF3aWpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5ODEwMzcsImV4cCI6MjA3OTU1NzAzN30.DNt4LNPJuRYlleLTa8bGgqnL6ScnE76jr65qvY96Rig';
+      const SUPABASE_URL = 'https://hltqagfpltxdfftawijf.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsdHFhZ2ZwbHR4ZGZmdGF3aWpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5ODEwMzcsImV4cCI6MjA3OTU1NzAzN30.DNt4LNPJuRYlleLTa8bGgqnL6ScnE76jr65qvY96Rig';
 
-        let supabase = null;
-        if (SUPABASE_URL !== 'https://dhfbrncucdzcdsyyxirx.supabase.co' && window.supabase) {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
+let supabase = null;
+if (window.supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('✓ Supabase подключен');
+}
 
         // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
         let currentUser = null;
@@ -1313,102 +1314,191 @@
 
         // ========== ЛОГИН ==========
         async function handleLogin() {
-    if (supabase) {
-        const { data, error } = await supabase.auth.signInAnonymously();
-        if (error) {
-            console.error('Auth error:', error);
-            showMessage('Ошибка входа: ' + error.message);
-            return;
-        }
-        currentUser = data.user;
-        console.log('Current user:', currentUser.id);
-        await loadItems();
-        console.log('Items loaded:', items.length);
-        // ДОБАВЛЕНО - отображаем после загрузки
-        renderHome();
-        renderAllItems();
-        renderLowStock();
-    } else {
-        const username = `User_${Math.random().toString(36).substr(2, 9)}`;
-        localStorage.setItem('currentUser', username);
-        currentUser = { id: username };
-        renderHome();
+    const email = prompt('Введите email:');
+    const password = prompt('Введите пароль:');
+    
+    if (!email || !password) {
+        alert('Email и пароль обязательны');
+        return;
     }
-    showMainApp();
+    
+    try {
+        // Пытаемся войти
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        
+        if (error) {
+            // Если пользователя нет, регистрируем его
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                email: email,
+                password: password
+            });
+            
+            if (signUpError) {
+                alert('Ошибка регистрации: ' + signUpError.message);
+                return;
+            }
+            
+            console.log('✓ Пользователь зарегистрирован');
+        }
+        
+        // Получаем текущего пользователя
+        const { data: { user } } = await supabase.auth.getUser();
+        currentUser = user;
+        console.log('✓ Вход выполнен, ID пользователя:', currentUser.id);
+        
+        showMainApp();
+        loadItems();
+        
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
 }
-
         // ========== ВЫХОД ==========
         async function logout() {
-            if (!confirm('Вы уверены?')) return;
+            if (!supabase) return;
             
-            if (supabase) {
-                await supabase.auth.signOut();
-            } else {
-                localStorage.removeItem('currentUser');
+            try {
+                const { error } = await supabase.auth.signOut();
+                if (error) throw error;
+                
+                currentUser = null;
+                items = [];
+                hideMainApp();
+                showLoginScreen();
+                
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
             }
-            currentUser = null;
-            items = [];
-            showLoginScreen();
         }
 
         // ========== ЗАГРУЗКА ТОВАРОВ ==========
         async function loadItems() {
-            if (!supabase) return;
-            
-            const { data, error } = await supabase
-                .from('inventory')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .order('id', { ascending: true });
-            
-            if (error) {
-                console.error('Ошибка загрузки:', error);
-                return;
-            }
-            
-            items = data || [];
-            renderHome();
-            renderAllItems();
-            renderLowStock();
+    if (!supabase || !currentUser) {
+        console.error('Supabase не подключен или пользователь не авторизован');
+        return;
+    }
+    
+    try {
+        const { data, error } = await supabase
+            .from('inventory')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false });
+        
+        if (error) {
+            console.error('Ошибка загрузки:', error);
+            alert('Ошибка: ' + error.message);
+            return;
         }
+        
+        items = data || [];
+        console.log('✓ Загружено товаров:', items.length);
+        
+        renderHome();
+        renderAllItems();
+        renderLowStock();
+        
+    } catch (err) {
+        console.error('Ошибка:', err);
+        alert('Ошибка загрузки: ' + err.message);
+    }
+}
 
+// ========== ОБНОВЛЕНИЕ КОЛИЧЕСТВА ==========
+        async function updateItemQuantity(itemId, newQuantity) {
+            if (!supabase || !currentUser) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('inventory')
+                    .update({ quantity: newQuantity })
+                    .eq('id', itemId)
+                    .eq('user_id', currentUser.id);
+                
+                if (error) throw error;
+                
+                console.log('✓ Обновлено');
+                loadItems();
+                
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
+            }
+        }
+        
         // ========== ДОБАВИТЬ ТОВАР ==========
         async function addItemModal() {
-            const name = document.getElementById('modalItemName').value.trim();
-            const qty = parseFloat(document.getElementById('modalItemQty').value);
-            const unit = document.getElementById('modalItemUnit').value.trim();
-
-            if (!name || !qty || !unit) {
-                showMessage('Заполните все поля');
-                return;
-            }
-
-            const now = new Date().toISOString();
-
-            if (supabase) {
-                const { error } = await supabase.from('inventory').insert([{
-                    name, quantity: qty, unit, user_id: currentUser.id, created_at: now
-                }]);
-                if (error) {
-                    showMessage('Ошибка: ' + error.message);
-                    return;
-                }
-                await loadItems();
-            } else {
-                const id = Math.max(...items.map(i => i.id || 0), 0) + 1;
-                items.push({ id, name, quantity: qty, unit, created_at: now });
-                saveData();
-                renderHome();
-                renderAllItems();
-            }
-
-            closeModal('addModal');
-            document.getElementById('modalItemName').value = '';
-            document.getElementById('modalItemQty').value = '';
-            document.getElementById('modalItemUnit').value = '';
-            showMessage('✓ Добавлено');
+    const name = document.getElementById('modalItemName').value.trim();
+    const qty = parseFloat(document.getElementById('modalItemQty').value);
+    const unit = document.getElementById('modalItemUnit').value.trim();
+    
+    if (!name || !qty || !unit) {
+        alert('Заполните все поля');
+        return;
+    }
+    
+    if (!currentUser) {
+        alert('Пользователь не авторизован');
+        return;
+    }
+    
+    try {
+        const { data, error } = await supabase
+            .from('inventory')
+            .insert([{
+                name: name,
+                quantity: qty,
+                unit: unit,
+                user_id: currentUser.id
+            }]);
+        
+        if (error) {
+            console.error('Ошибка добавления:', error);
+            alert('Ошибка: ' + error.message);
+            return;
         }
+        
+        console.log('✓ Товар добавлен');
+        alert('✓ Товар добавлен');
+        
+        // Очищаем форму
+        document.getElementById('modalItemName').value = '';
+        document.getElementById('modalItemQty').value = '';
+        document.getElementById('modalItemUnit').value = '';
+        
+        closeModal('addModal');
+        loadItems(); // Перезагружаем товары
+        
+    } catch (err) {
+        console.error('Ошибка:', err);
+        alert('Ошибка: ' + err.message);
+    }
+}
 
+// ========== УДАЛИТЬ ТОВАР ==========
+        async function deleteItemConfirm() {
+            if (!supabase || !currentUser || !currentEditId) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('inventory')
+                    .delete()
+                    .eq('id', currentEditId)
+                    .eq('user_id', currentUser.id);
+                
+                if (error) throw error;
+                
+                console.log('✓ Удалено');
+                closeModal('deleteModal');
+                loadItems();
+                
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
+            }
+        }
+        
         // ========== ЗАБРАТЬ ТОВАР ==========
         function openTakeModal(id) {
             currentEditId = id;
@@ -1530,6 +1620,10 @@
             renderHome();
         }
 
+function hideMainApp() {
+    document.getElementById('mainApp').classList.add('hidden');
+}
+        
         // ========== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ==========
         function switchTab(tab) {
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
