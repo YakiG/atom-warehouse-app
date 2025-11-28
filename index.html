@@ -1358,16 +1358,20 @@ if (window.supabase) {
 }
         // ========== ВЫХОД ==========
         async function logout() {
-            if (!confirm('Вы уверены?')) return;
+            if (!supabase) return;
             
-            if (supabase) {
-                await supabase.auth.signOut();
-            } else {
-                localStorage.removeItem('currentUser');
+            try {
+                const { error } = await supabase.auth.signOut();
+                if (error) throw error;
+                
+                currentUser = null;
+                items = [];
+                hideMainApp();
+                showLoginScreen();
+                
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
             }
-            currentUser = null;
-            items = [];
-            showLoginScreen();
         }
 
         // ========== ЗАГРУЗКА ТОВАРОВ ==========
