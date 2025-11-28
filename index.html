@@ -1143,13 +1143,14 @@
 
     <script>
         // ========== SUPABASE НАСТРОЙКА ==========
-        const SUPABASE_URL = 'https://hltqagfpltxdfftawijf.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsdHFhZ2ZwbHR4ZGZmdGF3aWpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5ODEwMzcsImV4cCI6MjA3OTU1NzAzN30.DNt4LNPJuRYlleLTa8bGgqnL6ScnE76jr65qvY96Rig';
+      const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
 
-        let supabase = null;
-        if (SUPABASE_URL !== 'https://hltqagfpltxdfftawijf.supabase.co' && window.supabase) {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
+let supabase = null;
+if (window.supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('✓ Supabase подключен');
+}
 
         // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
         let currentUser = null;
@@ -1313,30 +1314,48 @@
 
         // ========== ЛОГИН ==========
         async function handleLogin() {
-    if (supabase) {
-        const { data, error } = await supabase.auth.signInAnonymously();
-        if (error) {
-            console.error('Auth error:', error);
-            showMessage('Ошибка входа: ' + error.message);
-            return;
-        }
-        currentUser = data.user;
-        console.log('Current user:', currentUser.id);
-        await loadItems();
-        console.log('Items loaded:', items.length);
-        // ДОБАВЛЕНО - отображаем после загрузки
-        renderHome();
-        renderAllItems();
-        renderLowStock();
-    } else {
-        const username = `User_${Math.random().toString(36).substr(2, 9)}`;
-        localStorage.setItem('currentUser', username);
-        currentUser = { id: username };
-        renderHome();
+    const email = prompt('Введите email:');
+    const password = prompt('Введите пароль:');
+    
+    if (!email || !password) {
+        alert('Email и пароль обязательны');
+        return;
     }
-    showMainApp();
+    
+    try {
+        // Пытаемся войти
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        
+        if (error) {
+            // Если пользователя нет, регистрируем его
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                email: email,
+                password: password
+            });
+            
+            if (signUpError) {
+                alert('Ошибка регистрации: ' + signUpError.message);
+                return;
+            }
+            
+            console.log('✓ Пользователь зарегистрирован');
+        }
+        
+        // Получаем текущего пользователя
+        const { data: { user } } = await supabase.auth.getUser();
+        currentUser = user;
+        console.log('✓ Вход выполнен, ID пользователя:', currentUser.id);
+        
+        showMainApp();
+        loadItems();
+        
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
 }
-
         // ========== ВЫХОД ==========
         async function logout() {
             if (!confirm('Вы уверены?')) return;
