@@ -1620,6 +1620,10 @@ if (window.supabase) {
             renderHome();
         }
 
+function hideMainApp() {
+    document.getElementById('mainApp').classList.add('hidden');
+}
+        
         // ========== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ==========
         function switchTab(tab) {
             document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
