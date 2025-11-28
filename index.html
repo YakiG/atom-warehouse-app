@@ -1477,6 +1477,28 @@ if (window.supabase) {
     }
 }
 
+// ========== УДАЛИТЬ ТОВАР ==========
+        async function deleteItemConfirm() {
+            if (!supabase || !currentUser || !currentEditId) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('inventory')
+                    .delete()
+                    .eq('id', currentEditId)
+                    .eq('user_id', currentUser.id);
+                
+                if (error) throw error;
+                
+                console.log('✓ Удалено');
+                closeModal('deleteModal');
+                loadItems();
+                
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
+            }
+        }
+        
         // ========== ЗАБРАТЬ ТОВАР ==========
         function openTakeModal(id) {
             currentEditId = id;
