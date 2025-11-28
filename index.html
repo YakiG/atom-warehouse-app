@@ -1373,21 +1373,23 @@ if (window.supabase) {
 }
         // ========== ВЫХОД ==========
         async function logout() {
-            if (!supabase) return;
-            
-            try {
-                const { error } = await supabase.auth.signOut();
-                if (error) throw error;
-                
-                currentUser = null;
-                items = [];
-                hideMainApp();
-                showLoginScreen();
-                
-            } catch (err) {
-                alert('Ошибка: ' + err.message);
-            }
+    if (!confirm('Вы уверены?')) return;
+    
+    try {
+        if (supabase) {
+            await supabase.auth.signOut();
         }
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('inventory');
+        currentUser = null;
+        items = [];
+        showLoginScreen();
+        showMessage('✓ Вы вышли из системы');
+    } catch (err) {
+        console.error('Logout error:', err);
+        showLoginScreen();
+    }
+}
 
         // ========== ЗАГРУЗКА ТОВАРОВ ==========
         async function loadItems() {
