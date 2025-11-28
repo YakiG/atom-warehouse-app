@@ -1288,29 +1288,44 @@ if (window.supabase) {
 
         // ========== ИНИЦИАЛИЗАЦИЯ ==========
         async function init() {
-            initTheme();
-
-            if (supabase) {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session) {
-                    currentUser = session.user;
-                    await loadItems();
-                    showMainApp();
-                } else {
-                    showLoginScreen();
-                }
-            } else {
-                items = JSON.parse(localStorage.getItem('inventory')) || [];
-                const savedUser = localStorage.getItem('currentUser');
-                if (savedUser) {
-                    currentUser = { id: savedUser };
-                    renderHome();
-                    showMainApp();
-                } else {
-                    showLoginScreen();
-                }
+    initTheme();
+    
+    if (supabase) {
+        try {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            
+            if (error) {
+                console.error('Session error:', error);
+                showLoginScreen();
+                return;
             }
+            
+            if (session?.user) {
+                currentUser = session.user;
+                console.log('✓ Сессия восстановлена, ID:', currentUser.id);
+                await loadItems();
+                showMainApp();
+            } else {
+                console.log('Нет активной сессии, показываем экран входа');
+                showLoginScreen();
+            }
+        } catch (err) {
+            console.error('Init error:', err);
+            showLoginScreen();
         }
+    } else {
+        // Offline mode
+        items = JSON.parse(localStorage.getItem('inventory')) || [];
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            currentUser = { id: savedUser };
+            renderHome();
+            showMainApp();
+        } else {
+            showLoginScreen();
+        }
+    }
+}
 
         // ========== ЛОГИН ==========
         async function handleLogin() {
