@@ -1679,7 +1679,7 @@ function hideMainApp() {
             list.innerHTML = items.map(item => `
                 <div class="item-card ${item.quantity <= 10 ? 'low-stock' : ''}">
                     <div class="item-info">
-                        <h3>#${item.id} ${item.name}</h3>
+                        <h3>${item.name}</h3>
                         <p>${item.quantity} ${item.unit}</p>
                     </div>
                         <div class="item-actions">
@@ -1703,7 +1703,7 @@ function hideMainApp() {
             list.innerHTML = lowItems.map(item => `
                 <div class="item-card low-stock">
                     <div class="item-info">
-                        <h3>#${item.id} ${item.name}</h3>
+                        <h3>${item.name}</h3>
                         <p>${item.quantity} ${item.unit}</p>
                     </div>
                     <div class="item-qty">${item.quantity}</div>
