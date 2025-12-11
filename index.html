@@ -1202,25 +1202,37 @@ function exportToExcel() {
     }
 
     try {
-        // Создаём CSV таблицу (Excel поддерживает CSV)
-        let csv = 'Название\tКоличество\tЕдиница\tДата\n';
-        
-        items.forEach(item => {
+        // Создаём данные для Excel
+        const data = items.map(item => {
             let date = '';
             if (item.createdat) {
                 const d = new Date(item.createdat);
                 date = d.toLocaleDateString('ru-RU');
             }
-            csv += `${item.name}\t${item.quantity}\t${item.unit}\t${date}\n`;
+            return {
+                'Название': item.name,
+                'Количество': item.quantity,
+                'Единица': item.unit,
+                'Дата': date
+            };
         });
 
-        // Создаём Blob с CSV данными
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        
-        // Если доступен Web Share API (мобильные устройства)
-        if (navigator.share) {
-            const file = new File([blob], `atom-warehouse-${new Date().toISOString().split('T')}.csv`, { type: 'text/csv' });
-            
+        // Создаём Excel книгу с помощью XLSX
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Товары');
+
+        // Пишем в Blob
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+        // Используем Web Share API для мобильных
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'test.xlsx')] })) {
+            const fileName = `atom-warehouse-${new Date().toISOString().split('T')}.xlsx`;
+            const file = new File([blob], fileName, { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            });
+
             navigator.share({
                 files: [file],
                 title: 'Экспорт товаров',
@@ -1230,17 +1242,31 @@ function exportToExcel() {
             }).catch(err => {
                 if (err.name !== 'AbortError') {
                     console.error('Share error:', err);
-                    fallbackDownload(blob);
+                    downloadExcel(blob);
                 }
             });
         } else {
-            // Fallback для браузера (скачиваем файл)
-            fallbackDownload(blob);
+            // Fallback для браузера
+            downloadExcel(blob);
         }
     } catch (err) {
         console.error('Export error:', err);
         showMessage('✗ Ошибка экспорта');
     }
+}
+
+function downloadExcel(blob) {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `atom-warehouse-${new Date().toISOString().split('T')}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    }, 100);
+    showMessage('✓ Файл скачан!');
 }
 
 function fallbackDownload(blob) {
