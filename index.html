@@ -1726,8 +1726,19 @@ function hideMainApp() {
 
         // ========== УТИЛИТЫ ==========
         function openModal(id) {
-            document.getElementById(id).classList.add('active');
-        }
+    const modal = document.getElementById(id);
+    modal.classList.add('active');
+    
+    // Фиксируем body при открытом модале
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    
+    // Telegram WebApp
+    if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.expand();
+    }
+}
 
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
