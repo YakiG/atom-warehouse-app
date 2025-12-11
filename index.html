@@ -1194,36 +1194,68 @@ if (window.supabase) {
         }
 
         // ========== EXCEL ФУНКЦИИ С ДАТОЙ И ВРЕМЕНЕМ ==========
+
 function exportToExcel() {
     if (items.length === 0) {
         showMessage('⚠️ Нет данных для экспорта');
         return;
     }
 
-    // Создаём CSV таблицу
-    let csv = 'Название\tКоличество\tЕдиница\tДата\n';
-    
-    items.forEach(item => {
-        let date = '';
-        if (item.createdat) {
-            const d = new Date(item.createdat);
-            date = d.toLocaleDateString('ru-RU');
-        }
-        // Используем TAB для разделения колонок (Excel поймёт)
-        csv += `${item.name}\t${item.quantity}\t${item.unit}\t${date}\n`;
-    });
+    try {
+        // Создаём CSV таблицу (Excel поддерживает CSV)
+        let csv = 'Название\tКоличество\tЕдиница\tДата\n';
+        
+        items.forEach(item => {
+            let date = '';
+            if (item.createdat) {
+                const d = new Date(item.createdat);
+                date = d.toLocaleDateString('ru-RU');
+            }
+            csv += `${item.name}\t${item.quantity}\t${item.unit}\t${date}\n`;
+        });
 
-    // Копируем в буфер обмена
-    navigator.clipboard.writeText(csv).then(() => {
-        showMessage('✓ Скопировано в буфер! Вставьте Ctrl+V в Excel');
-    }).catch(err => {
-        console.error('Clipboard error:', err);
-        // Fallback для старых браузеров - показываем диалог
-        alert('Скопируйте вручную:\n\n' + csv.substring(0, 200) + '...');
-        showMessage('✗ Ошибка копирования');
-    });
+        // Создаём Blob с CSV данными
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        
+        // Если доступен Web Share API (мобильные устройства)
+        if (navigator.share) {
+            const file = new File([blob], `atom-warehouse-${new Date().toISOString().split('T')}.csv`, { type: 'text/csv' });
+            
+            navigator.share({
+                files: [file],
+                title: 'Экспорт товаров',
+                text: 'Список товаров из Atom Warehouse'
+            }).then(() => {
+                showMessage('✓ Файл отправлен!');
+            }).catch(err => {
+                if (err.name !== 'AbortError') {
+                    console.error('Share error:', err);
+                    fallbackDownload(blob);
+                }
+            });
+        } else {
+            // Fallback для браузера (скачиваем файл)
+            fallbackDownload(blob);
+        }
+    } catch (err) {
+        console.error('Export error:', err);
+        showMessage('✗ Ошибка экспорта');
+    }
 }
 
+function fallbackDownload(blob) {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `atom-warehouse-${new Date().toISOString().split('T')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    }, 100);
+    showMessage('✓ Файл скачан!');
+}
 
         async function importFromExcel(event) {
             const file = event.target.files[0];
