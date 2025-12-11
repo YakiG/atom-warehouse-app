@@ -1741,8 +1741,13 @@ function hideMainApp() {
 }
 
         function closeModal(id) {
-            document.getElementById(id).classList.remove('active');
-        }
+    const modal = document.getElementById(id);
+    modal.classList.remove('active');
+    
+    // Восстанавливаем скролл
+    document.body.style.overflow = 'auto';
+    document.body.style.position = 'static';
+}
 
         function saveData() {
             localStorage.setItem('inventory', JSON.stringify(items));
